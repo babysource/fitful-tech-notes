@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2026-05-15 MiniMind / LLM 工程化训练学习笔记</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --text: #1d2433;
+      --muted: #627084;
+      --brand: #4f46e5;
+      --brand-2: #06b6d4;
+      --line: #e4e7ef;
+      --soft: #eef2ff;
+      --code: #0f172a;
+      --ok: #059669;
+      --warn: #d97706;
+      --danger: #dc2626;
+      --shadow: 0 14px 34px rgba(15, 23, 42, .08);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top left, #e0f2fe 0, transparent 32rem), radial-gradient(circle at top right, #ede9fe 0, transparent 28rem), var(--bg);
+      line-height: 1.72;
+    }
+    a { color: inherit; }
+    .layout {
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      padding: 24px 18px;
+      border-right: 1px solid var(--line);
+      background: rgba(255,255,255,.82);
+      backdrop-filter: blur(16px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      box-shadow: var(--shadow);
+    }
+    .brand h1 {
+      font-size: 16px;
+      line-height: 1.3;
+      margin: 0;
+    }
+    .brand p {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    nav a {
+      display: block;
+      padding: 9px 12px;
+      margin: 4px 0;
+      border-radius: 12px;
+      text-decoration: none;
+      color: #334155;
+      font-size: 14px;
+    }
+    nav a:hover {
+      background: var(--soft);
+      color: var(--brand);
+    }
+    main {
+      padding: 34px clamp(20px, 4vw, 56px) 80px;
+      max-width: 1180px;
+    }
+    .hero {
+      padding: 36px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(79,70,229,.95), rgba(6,182,212,.88));
+      color: white;
+      box-shadow: var(--shadow);
+      margin-bottom: 28px;
+    }
+    .hero h2 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.15;
+    }
+    .hero p { margin: 0; opacity: .92; max-width: 850px; }
+    .quick-grid, .card-grid, .two-col {
+      display: grid;
+      gap: 16px;
+    }
+    .quick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 22px 0; }
+    .card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .two-col { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .card, section {
+      background: rgba(255,255,255,.92);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .card { padding: 18px; }
+    section { padding: 28px; margin: 20px 0; }
+    section h2 {
+      margin-top: 0;
+      font-size: 26px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px;
+    }
+    h3 { margin-top: 24px; color: #172554; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 6px;
+    }
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin: 16px 0;
+    }
+    .node {
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-weight: 650;
+      box-shadow: 0 6px 18px rgba(15,23,42,.05);
+    }
+    .arrow { color: var(--muted); font-weight: 800; }
+    pre {
+      overflow: auto;
+      padding: 16px;
+      border-radius: 14px;
+      background: var(--code);
+      color: #dbeafe;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    code {
+      font-family: "Cascadia Code", "Consolas", monospace;
+      background: #eef2ff;
+      color: #3730a3;
+      padding: 2px 5px;
+      border-radius: 6px;
+    }
+    pre code { background: transparent; color: inherit; padding: 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      overflow: hidden;
+      border-radius: 14px;
+      font-size: 14px;
+    }
+    th, td { border: 1px solid var(--line); padding: 10px 12px; vertical-align: top; }
+    th { background: #f8fafc; text-align: left; }
+    .note {
+      border-left: 5px solid var(--brand);
+      background: #eef2ff;
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin: 14px 0;
+    }
+    .warn { border-left-color: var(--warn); background: #fff7ed; }
+    .danger { border-left-color: var(--danger); background: #fef2f2; }
+    .ok { border-left-color: var(--ok); background: #ecfdf5; }
+    details {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin: 10px 0;
+      background: #fff;
+    }
+    summary { cursor: pointer; font-weight: 700; color: #172554; }
+    .flashcards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .flashcard {
+      min-height: 132px;
+      perspective: 1000px;
+      cursor: pointer;
+    }
+    .flashcard-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform .45s;
+      transform-style: preserve-3d;
+    }
+    .flashcard:hover .flashcard-inner { transform: rotateY(180deg); }
+    .front, .back {
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      backface-visibility: hidden;
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: white;
+      box-shadow: var(--shadow);
+    }
+    .front { display: flex; align-items: center; justify-content: center; text-align: center; font-size: 20px; font-weight: 800; color: var(--brand); }
+    .back { transform: rotateY(180deg); color: #334155; }
+    .quiz details { background: #f8fafc; }
+    .footer {
+      margin-top: 32px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+    }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      aside { position: relative; height: auto; }
+      .quick-grid, .card-grid, .two-col, .flashcards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>2026-05-15 学习笔记</h1>
+        <p>MiniMind / LLM 工程化训练</p>
+      </div>
+    </div>
+    <nav>
+      <a href="#overview">学习总览</a>
+      <a href="#pipeline">训练链路</a>
+      <a href="#tokenizer">Tokenizer</a>
+      <a href="#dataset">Dataset</a>
+      <a href="#model">模型结构</a>
+      <a href="#pretrain">Pretrain</a>
+      <a href="#sft">Full SFT</a>
+      <a href="#lora">LoRA</a>
+      <a href="#eval">评估与 Benchmark</a>
+      <a href="#publish">模型发布</a>
+      <a href="#architecture">架构与参数量</a>
+      <a href="#cards">复习卡片</a>
+      <a href="#quiz">自测题</a>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <h2>MiniMind / LLM 工程化训练学习笔记</h2>
+      <p>这是一份面向初学者的学习笔记：用 MicroGPT 的极简原理理解 MiniMind 的真实工程链路，从 tokenizer、dataset、model 到 pretrain、full_sft、LoRA、评估和发布。</p>
+    </div>
+
+    <div class="quick-grid">
+      <div class="card"><span class="tag">主线</span><strong>Pretrain → SFT → Eval → Convert</strong><br>先跑通官方链路。</div>
+      <div class="card"><span class="tag">核心</span><strong>Next-token prediction</strong><br>输入前文，预测下一个 token。</div>
+      <div class="card"><span class="tag">工程</span><strong>Checkpoint / mixed precision / DDP</strong><br>让训练可跑、可恢复、可扩展。</div>
+      <div class="card"><span class="tag">交付</span><strong>Benchmark + 人工评审</strong><br>loss 不是交付标准。</div>
+    </div>
+
+    <section id="overview">
+      <h2>1. 学习总览</h2>
+      <p>本次学习围绕 <code>minimind</code> 项目展开。它不是极简玩具代码，而是一个小型但完整的 LLM 工程训练项目。</p>
+      <div class="two-col">
+        <div class="card">
+          <h3>MicroGPT</h3>
+          <p>用于理解 GPT 原理的透明教学代码。重点是看清楚：文本如何变 token、模型如何算 logits、loss 如何反向传播。</p>
+        </div>
+        <div class="card">
+          <h3>MiniMind</h3>
+          <p>用于学习工程化训练。包含 tokenizer、dataset、模型结构、训练脚本、SFT、LoRA、checkpoint、评估与发布。</p>
+        </div>
+      </div>
+      <pre><code>MicroGPT = 原理最小化
+MiniMind = 工程链路完整化
+二者核心都是：输入 token → 预测下一个 token → loss → backward → optimizer.step()</code></pre>
+    </section>
+
+    <section id="pipeline">
+      <h2>2. MiniMind 训练链路</h2>
+      <div class="flow">
+        <div class="node">Tokenizer</div><div class="arrow">→</div>
+        <div class="node">Pretrain Data</div><div class="arrow">→</div>
+        <div class="node">train_pretrain.py</div><div class="arrow">→</div>
+        <div class="node">pretrain_768.pth</div><div class="arrow">→</div>
+        <div class="node">SFT Data</div><div class="arrow">→</div>
+        <div class="node">train_full_sft.py</div><div class="arrow">→</div>
+        <div class="node">full_sft_768.pth</div><div class="arrow">→</div>
+        <div class="node">eval_llm.py</div><div class="arrow">→</div>
+        <div class="node">convert_model.py</div>
+      </div>
+      <div class="note ok">学习建议：先用官方 tokenizer 和 mini 数据跑通 pretrain + full_sft，再研究 LoRA、替换 tokenizer 或复杂架构。</div>
+    </section>
+
+    <section id="tokenizer">
+      <h2>3. Tokenizer：文字与 token id 的翻译器</h2>
+      <h3>核心概念</h3>
+      <table>
+        <tr><th>术语</th><th>通俗解释</th></tr>
+        <tr><td>tokenizer</td><td>文本和 token id 的翻译器。</td></tr>
+        <tr><td>vocab / 词表</td><td>token 到 id 的映射表。</td></tr>
+        <tr><td>BPE</td><td>高频片段合并成 token。</td></tr>
+        <tr><td>ByteLevel</td><td>从字节层面兜底，几乎任何字符都能表示。</td></tr>
+      </table>
+      <pre><code>文本：你好，人工智能
+↓ tokenizer.encode
+input_ids: [1968, ...]
+↓ tokenizer.decode
+文本：你好，人工智能</code></pre>
+      <div class="note">MiniMind 的 tokenizer 在 <code>minimind/model/tokenizer.json</code>，不是没有中文，而是 ByteLevel 形式看起来像乱码。只要 encode/decode 可逆，就说明支持中文。</div>
+      <div class="note warn">训练、full_sft、LoRA、推理必须使用同一套 tokenizer。只要加载已有权重继续训练，就不能随便换词表。</div>
+      <h3>词表大小与参数</h3>
+      <pre><code>词表相关参数 ≈ vocab_size × hidden_size
+如果 embedding 和 lm_head 不共享：≈ 2 × vocab_size × hidden_size</code></pre>
+      <p>MiniMind 使用 6400 小词表，是为了降低 embedding 和输出层参数占比；Qwen 约 248k 词表更适合大模型、多语言和代码，但不适合直接塞进 MiniMind 小模型。</p>
+    </section>
+
+    <section id="dataset">
+      <h2>4. Dataset：数据如何变成训练样本</h2>
+      <h3>JSONL</h3>
+      <p>JSONL 是一行一个 JSON 对象。MiniMind 预训练和 SFT 数据都使用 JSONL。</p>
+      <pre><code>{"text": "人工智能正在改变世界。"}
+{"text": "Transformer 是现代大语言模型的重要结构。"}</code></pre>
+      <h3>PretrainDataset</h3>
+      <pre><code>text
+→ tokenizer
+→ 加 BOS / EOS / PAD
+→ input_ids
+→ labels = input_ids.clone()
+→ PAD 对应 label 改成 -100</code></pre>
+      <h3>SFTDataset</h3>
+      <pre><code>conversations
+→ apply_chat_template
+→ input_ids
+→ 只让 assistant 回答部分参与 loss
+→ user/system 部分 label = -100</code></pre>
+      <div class="note">SFT 中，用户问题是题目，assistant 回答是标准答案，所以通常只批改 assistant 部分。</div>
+    </section>
+
+    <section id="model">
+      <h2>5. 模型结构：从 input_ids 到 loss</h2>
+      <div class="flow">
+        <div class="node">input_ids</div><div class="arrow">→</div>
+        <div class="node">Embedding</div><div class="arrow">→</div>
+        <div class="node">Transformer Blocks</div><div class="arrow">→</div>
+        <div class="node">hidden_states</div><div class="arrow">→</div>
+        <div class="node">lm_head</div><div class="arrow">→</div>
+        <div class="node">logits</div><div class="arrow">→</div>
+        <div class="node">CrossEntropy Loss</div>
+      </div>
+      <table>
+        <tr><th>模块</th><th>作用</th><th>类比</th></tr>
+        <tr><td>Embedding</td><td>token id 变成向量</td><td>编号变个人档案</td></tr>
+        <tr><td>Attention</td><td>让 token 看上下文</td><td>开会交流</td></tr>
+        <tr><td>MLP</td><td>每个 token 自己加工</td><td>回座位消化</td></tr>
+        <tr><td>RMSNorm</td><td>稳定数值</td><td>统一量纲</td></tr>
+        <tr><td>lm_head</td><td>hidden_states 变词表分数</td><td>答题卡评分器</td></tr>
+      </table>
+      <div class="note">logits 不是概率，而是模型给每个候选 token 的原始分数。softmax 后才变成概率。</div>
+    </section>
+
+    <section id="pretrain">
+      <h2>6. Pretrain：让模型学语言</h2>
+      <p>预训练的目标是 <strong>next-token prediction</strong>：根据前文预测下一个 token。</p>
+      <pre><code>看到：BOS 我 喜欢
+预测：我 喜欢 AI</code></pre>
+      <p>MiniMind 中，<code>train_pretrain.py</code> 负责：加载 tokenizer、创建模型、读取 <code>pretrain_t2t_mini.jsonl</code>、训练、保存 <code>pretrain_768.pth</code>。</p>
+      <details>
+        <summary>工程术语速记</summary>
+        <ul>
+          <li><strong>epoch</strong>：完整看一遍数据。</li>
+          <li><strong>batch_size</strong>：一次喂多少样本。</li>
+          <li><strong>step</strong>：训练一个 batch。</li>
+          <li><strong>learning_rate</strong>：参数改动幅度。</li>
+          <li><strong>optimizer</strong>：真正更新参数。</li>
+          <li><strong>checkpoint</strong>：训练存档，可断点续训。</li>
+        </ul>
+      </details>
+    </section>
+
+    <section id="sft">
+      <h2>7. Full SFT：让模型学会当助手</h2>
+      <p><code>full_sft</code> 是全量监督微调：加载 <code>pretrain</code> 权重，用对话数据继续训练整个模型。</p>
+      <table>
+        <tr><th>项目</th><th>Pretrain</th><th>Full SFT</th></tr>
+        <tr><td>数据</td><td>{"text": ...}</td><td>{"conversations": [...]}</td></tr>
+        <tr><td>目标</td><td>学语言</td><td>学对话和指令</td></tr>
+        <tr><td>默认输入权重</td><td>none</td><td>pretrain</td></tr>
+        <tr><td>默认输出权重</td><td>pretrain</td><td>full_sft</td></tr>
+      </table>
+      <div class="note danger">full_sft 不改变参数数量，只改变参数值。但如果数据差、学习率大、训练太久，小模型容易灾难性遗忘或模式坍塌。</div>
+    </section>
+
+    <section id="lora">
+      <h2>8. LoRA：低成本适配插件</h2>
+      <p>LoRA 冻结原模型大部分参数，只训练低秩小矩阵。</p>
+      <pre><code>W' = W + ΔW
+ΔW = B × A
+A: [in_features, rank]
+B: [rank, out_features]</code></pre>
+      <table>
+        <tr><th>适合</th><th>不适合</th></tr>
+        <tr><td>风格、格式、角色、领域表达、少量稳定知识</td><td>大量知识库、实时知识、必须精确引用的事实</td></tr>
+      </table>
+      <div class="note">LoRA 是小插件，不是知识库。大量公司文档更适合 RAG 或工具调用。</div>
+    </section>
+
+    <section id="eval">
+      <h2>9. 评估、Benchmark 与人工评审</h2>
+      <h3>eval_llm.py</h3>
+      <p><code>eval_llm.py</code> 是简单人工推理测试脚本，类似冒烟测试，用来观察模型是否能正常回答。</p>
+      <div class="note warn">它不是完整 benchmark，因为没有标准题库、自动评分、报告和回归对比。</div>
+      <h3>企业级评估链路</h3>
+      <div class="flow">
+        <div class="node">训练 loss</div><div class="arrow">→</div>
+        <div class="node">验证集 loss</div><div class="arrow">→</div>
+        <div class="node">离线 benchmark</div><div class="arrow">→</div>
+        <div class="node">业务测试集</div><div class="arrow">→</div>
+        <div class="node">安全测试</div><div class="arrow">→</div>
+        <div class="node">人工评审</div><div class="arrow">→</div>
+        <div class="node">灰度发布</div>
+      </div>
+      <p>人工评审会检查：准确性、相关性、完整性、安全性、格式遵循、业务口吻和是否可交付。</p>
+    </section>
+
+    <section id="publish">
+      <h2>10. 模型发布</h2>
+      <p>MiniMind 训练时得到 <code>.pth</code>，发布时通常转成 Transformers 目录。</p>
+      <pre><code>minimind-3/
+├── config.json
+├── generation_config.json
+├── pytorch_model.bin 或 model.safetensors
+├── tokenizer.json
+├── tokenizer_config.json
+├── special_tokens_map.json
+└── model_minimind.py 可选</code></pre>
+      <table>
+        <tr><th>文件</th><th>作用</th></tr>
+        <tr><td>config.json</td><td>模型结构说明书</td></tr>
+        <tr><td>model.safetensors / pytorch_model.bin</td><td>模型权重</td></tr>
+        <tr><td>tokenizer.json</td><td>词表和切分规则</td></tr>
+        <tr><td>tokenizer_config.json</td><td>tokenizer 配置和 chat_template</td></tr>
+        <tr><td>generation_config.json</td><td>默认生成参数</td></tr>
+      </table>
+    </section>
+
+    <section id="architecture">
+      <h2>11. 架构设计、参数量与 layer_types</h2>
+      <h3>参数量是训练前设计好的</h3>
+      <p>训练改变参数值，不改变参数数量。参数数量由架构决定。</p>
+      <pre><code>总参数 ≈ 词表参数 + Transformer 主体参数
+词表参数 ≈ vocab_size × hidden_size
+Attention ≈ 4H²（普通 MHA）
+SwiGLU MLP ≈ 3 × H × I</code></pre>
+      <h3>layer_types</h3>
+      <p>Qwen3.5 中的 <code>layer_types</code> 表示每层使用哪种 block/attention 算法，例如 <code>linear_attention</code> 或 <code>full_attention</code>。</p>
+      <div class="two-col">
+        <div class="card"><h3>full_attention</h3><p>标准 attention，表达强，但长文本计算贵，复杂度接近 O(N²)。</p></div>
+        <div class="card"><h3>linear_attention</h3><p>线性注意力，适合长上下文，计算更省，但算法和实现更复杂。</p></div>
+      </div>
+      <div class="note">MiniMind 没有逐层 layer_types 设计，它每层统一是 MiniMindBlock。</div>
+      <h3>训练是否逐层进行？</h3>
+      <p>不是。LLM 通常端到端训练：所有层一起 forward，loss 从最后算出，backward 从后往前传播梯度，optimizer 更新所有可训练参数。</p>
+    </section>
+
+    <section id="cards">
+      <h2>12. 复习卡片</h2>
+      <p>鼠标悬停卡片查看答案。</p>
+      <div class="flashcards">
+        <div class="flashcard"><div class="flashcard-inner"><div class="front">Tokenizer</div><div class="back">文字和 token id 的翻译器，不是知识库。</div></div></div>
+        <div class="flashcard"><div class="flashcard-inner"><div class="front">Pretrain</div><div class="back">让模型学语言规律和基础知识，目标是预测下一个 token。</div></div></div>
+        <div class="flashcard"><div class="flashcard-inner"><div class="front">Full SFT</div><div class="back">用对话数据全量微调，让模型学会按指令回答。</div></div></div>
+        <div class="flashcard"><div class="flashcard-inner"><div class="front">LoRA</div><div class="back">冻结原模型，只训练小插件参数，用于低成本适配。</div></div></div>
+        <div class="flashcard"><div class="flashcard-inner"><div class="front">Checkpoint</div><div class="back">训练存档，包含 model、optimizer、scaler、epoch、step。</div></div></div>
+        <div class="flashcard"><div class="flashcard-inner"><div class="front">Benchmark</div><div class="back">交付质量评估，不能只看 loss。</div></div></div>
+      </div>
+    </section>
+
+    <section id="quiz" class="quiz">
+      <h2>13. 自测题</h2>
+      <details><summary>1. tokenizer 是否包含知识？</summary><p>不包含。tokenizer 只负责文本和 token id 的映射，知识主要在模型权重中。</p></details>
+      <details><summary>2. full_sft 会改变模型参数数量吗？</summary><p>不会。它只改变参数值，不改变模型结构和参数个数。</p></details>
+      <details><summary>3. 为什么 LoRA 不能随便换 tokenizer？</summary><p>LoRA 依附于基础模型，基础模型的 embedding 和 token id 含义已经固定，换 tokenizer 会导致 id 语义错乱或越界。</p></details>
+      <details><summary>4. logits 是概率吗？</summary><p>不是。logits 是原始分数，经过 softmax 后才成为概率。</p></details>
+      <details><summary>5. 为什么 SFT 只训练 assistant 部分？</summary><p>因为 user 是题目，assistant 是标准答案；训练目标是让模型学会回答，而不是模仿用户问题。</p></details>
+      <details><summary>6. .pth 和 checkpoint 区别？</summary><p>.pth 通常是模型权重；checkpoint 是训练存档，还包括 optimizer、scaler、epoch、step 等。</p></details>
+      <details><summary>7. 企业模型为什么需要 benchmark？</summary><p>因为 loss 只能反映训练拟合程度，benchmark 和人工评审才能判断是否满足业务交付、安全和质量要求。</p></details>
+      <details><summary>8. 训练是一层一层单独训练吗？</summary><p>不是。通常是端到端训练，所有层一起 forward/backward/update。</p></details>
+    </section>
+
+    <div class="footer">建议复习节奏：先读总览和流程图，再看 tokenizer/dataset/model 三大基础，最后用卡片和自测题巩固。</div>
+  </main>
+</div>
+</body>
+</html>

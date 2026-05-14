@@ -1,0 +1,1 @@
+**Important:** Read [AGENTS.md](AGENTS.md) first; it is the maintenance guide for this static technical notes repository.
