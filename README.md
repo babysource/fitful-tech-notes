@@ -2,7 +2,7 @@
 
 ![BANNER](./BANNER.png)
 
-# 📚 笔记目录
+# 📚 笔记索引
 
 - [🧠 人工智能](#人工智能)
   - [🧬 模型训练](#模型训练)
@@ -11,7 +11,7 @@
 
 | 类目 | 笔记 | 日期 | MD | HTML |
 |---|---|---|---|---|
-| <span id="模型训练">🧬 模型训练</span> | MiniMind / LLM 工程化训练 | 2026-05-15 | [MD](./AI/model-training/2026-05-15/2026-05-15-minimind-llm-training-notes.md) | [HTML](./AI/model-training/2026-05-15/2026-05-15-minimind-llm-training-notes.html) |
+| <span id="模型训练">🧬 模型训练</span> | MiniMind / LLM 工程化训练 | 2026-05-15 | <a href="./AI/model-training/2026-05-15/2026-05-15-minimind-llm-training-notes.md" target="_blank" rel="noopener noreferrer">MD</a> | <a href="https://babysource.github.io/fitful-tech-notes/AI/model-training/2026-05-15/2026-05-15-minimind-llm-training-notes.html" target="_blank" rel="noopener noreferrer">HTML</a> |
 
 # ⭐ Star History
 
