@@ -18,14 +18,16 @@
 ## 索引模板
 
 ```markdown
-# 📚 笔记索引
+## 📚 笔记索引
 
 - [<大类 Emoji> <大类名称>](#<大类锚点>)
   - [<类目 Emoji> <中文类目>](#<类目锚点>)
+
+---
 
 ## <span id="<大类锚点>"><大类 Emoji> <大类名称></span>
 
 | 类目 | 笔记 | 日期 | MD | HTML |
 |---|---|---|---|---|
-| <span id="<类目锚点>"><类目 Emoji> <中文类目></span> | <精炼笔记标题> | <YYYY-MM-DD> | <a href="./<一级目录>/<二级目录>/<YYYY-MM-DD>/<笔记文件名>.md" target="_blank" rel="noopener noreferrer">MD</a> | <a href="https://babysource.github.io/fitful-tech-notes/<一级目录>/<二级目录>/<YYYY-MM-DD>/<笔记文件名>.html" target="_blank" rel="noopener noreferrer">HTML</a> |
+| <span id="<类目锚点>"><类目 Emoji> <中文类目></span> | <精炼笔记标题> | <YYYY-MM-DD> | [MD](./<一级目录>/<二级目录>/<YYYY-MM-DD>/<笔记文件名>.md) | [HTML](https://babysource.github.io/fitful-tech-notes/<一级目录>/<二级目录>/<YYYY-MM-DD>/<笔记文件名>.html) |
 ```
