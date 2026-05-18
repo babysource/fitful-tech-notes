@@ -24,9 +24,29 @@
 - 🌱 **个性进化**：根据用户使用过程的个性偏好持续进化。
 - 🔗 **软链安装**：推荐使用软链方式安装到全局技能目录。
 
-### ✍️ 辅学笔记
+### 🦉 辅学私教（聊即学）
 
-将人机学习会话沉淀为结构化的 Markdown 笔记与可视化的 HTML 复习页面。
+**私教式辅学：**构建体系化知识的个性化研习方案并实施渐进式辅学指导。
+
+- **Windows**
+
+```bat
+:: 请在仓库根目录执行（示例：Claude Code 安装）
+
+mklink /D "%USERPROFILE%\.claude\skills\fitful-tech-tutor" ".agents\skills\fitful-tech-tutor"
+```
+
+- **MacOS / Linux**
+
+```bash
+# 请在仓库根目录执行（示例：Claude Code 安装）
+
+ln -s ".agents/skills/fitful-tech-tutor" "$HOME/.claude/skills/fitful-tech-tutor"
+```
+
+### ✍️ 辅学笔记（学即记）
+
+**伴学式笔记：**将人机学习会话沉淀为结构化的 Markdown 笔记与可视化的 HTML 复习页面。
 
 - **Windows**
 
