@@ -26,7 +26,7 @@
 
 ### 🦉 辅学私教（聊即学）
 
----
+<hr style="height: 1px;" />
 
 **私教式辅学**：构建体系化知识的个性化研习方案并实施渐进式辅学指导。
 
@@ -48,7 +48,7 @@ ln -s ".agents/skills/fitful-tech-tutor" "$HOME/.claude/skills/fitful-tech-tutor
 
 ### ✍️ 辅学笔记（学即记）
 
----
+<hr style="height: 1px;" />
 
 **伴学式笔记**：将人机学习会话沉淀为结构化的 Markdown 笔记与可视化的 HTML 复习页面。
 
