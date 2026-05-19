@@ -4,16 +4,18 @@
 
 ## 📚 笔记索引
 
-- [🧠 人工智能](#人工智能)
-  - [🧬 模型训练](#模型训练)
+- [🧠 人工智能](#ai)
+  - [🧬 模型训练](#model-training)
+  - [🐎 驾驭智能](#agent-harness)
 
 ---
 
-## <span id="人工智能">🧠 人工智能</span>
+## <span id="ai">🧠 人工智能</span>
 
 | 类目 | 笔记 | 日期 | MD | HTML |
 |---|---|---|---|---|
-| <span id="模型训练">🧬 模型训练</span> | MiniMind / LLM 工程化训练 | 2026-05-15 | [MD](./AI/model-training/2026-05-15/2026-05-15-minimind-llm-training-notes.md) | [HTML](https://babysource.github.io/fitful-tech-notes/AI/model-training/2026-05-15/2026-05-15-minimind-llm-training-notes.html) |
+| <span id="model-training">🧬 模型训练</span> | MiniMind / LLM 工程化训练 | 26-05-15 | [MD](./AI/model-training/26-05-15/26-05-15-minimind-llm-training-notes.md) | [HTML](https://babysource.github.io/fitful-tech-notes/AI/model-training/26-05-15/26-05-15-minimind-llm-training-notes.html) |
+| <span id="agent-harness">🐎 驾驭智能</span> | Browser Harness 共学笔记 | 26-05-19 | [MD](./AI/agent-harness/26-05-19/26-05-19-browser-harness.md) | [HTML](https://babysource.github.io/fitful-tech-notes/AI/agent-harness/26-05-19/26-05-19-browser-harness.html) |
 
 ---
 

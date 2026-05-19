@@ -1,4 +1,4 @@
-# 2026-05-15 MiniMind / LLM 工程化训练学习笔记
+# 26-05-15 MiniMind / LLM 工程化训练学习笔记
 
 > 学习目标：通过 MiniMind 项目理解从零训练小型语言模型的工程流程，并用 MicroGPT 的极简原理辅助理解。  
 > 核心主线：tokenizer → dataset → model → pretrain → full_sft → LoRA → eval → convert/publish。

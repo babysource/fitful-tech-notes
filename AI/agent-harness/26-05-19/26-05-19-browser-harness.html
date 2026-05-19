@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Browser Harness 共学笔记｜26-05-19</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --paper: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --brand: #2563eb;
+      --brand-soft: #dbeafe;
+      --ok: #166534;
+      --warn: #9a3412;
+      --danger: #991b1b;
+      --code: #111827;
+      --code-bg: #f3f4f6;
+    }
+    * { box-sizing: border-box; }
+    html, body { max-width: 100%; overflow-x: hidden; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.65;
+    }
+    header {
+      background: linear-gradient(135deg, #1d4ed8, #0f172a);
+      color: white;
+      padding: 48px 24px;
+    }
+    header .wrap, main { width: min(1180px, 100%); margin: 0 auto; }
+    h1 { margin: 0 0 10px; font-size: 34px; }
+    .subtitle { margin: 0; color: #cbd5e1; }
+    main { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 20px; padding: 20px; overflow-x: hidden; }
+    nav {
+      position: sticky;
+      top: 16px;
+      align-self: start;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      max-height: calc(100vh - 32px);
+      overflow: auto;
+    }
+    nav h2 { font-size: 16px; margin: 0 0 12px; }
+    nav a {
+      display: block;
+      color: #334155;
+      text-decoration: none;
+      padding: 6px 8px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    nav a:hover { background: var(--brand-soft); color: #1d4ed8; }
+    article {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 28px;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    section { border-top: 1px solid var(--line); padding-top: 24px; margin-top: 28px; }
+    section:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+    h2 { font-size: 25px; margin: 0 0 14px; }
+    h3 { font-size: 19px; margin: 22px 0 8px; }
+    p { margin: 8px 0; }
+    ul, ol { padding-left: 22px; }
+    code {
+      background: var(--code-bg);
+      color: var(--code);
+      padding: 2px 5px;
+      border-radius: 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+    pre {
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 16px;
+      border-radius: 12px;
+      overflow-x: auto;
+      max-width: 100%;
+      font-size: 13px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    pre code { background: transparent; color: inherit; padding: 0; white-space: inherit; }
+    table { border-collapse: collapse; width: 100%; max-width: 100%; margin: 14px 0; table-layout: fixed; }
+    th, td { border: 1px solid var(--line); padding: 10px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+    th { background: #f8fafc; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin: 16px 0; }
+    .card { border: 1px solid var(--line); border-radius: 14px; padding: 16px; background: #fbfdff; }
+    .card h3 { margin-top: 0; }
+    .tag { display: inline-block; font-size: 12px; border-radius: 999px; padding: 3px 9px; margin: 2px; background: var(--brand-soft); color: #1e40af; }
+    .callout { border-left: 4px solid var(--brand); background: #eff6ff; padding: 12px 14px; border-radius: 10px; margin: 14px 0; }
+    .warn { border-left-color: #f97316; background: #fff7ed; }
+    .danger { border-left-color: #ef4444; background: #fef2f2; }
+    .ok { border-left-color: #22c55e; background: #f0fdf4; }
+    details { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 12px 0; background: #ffffff; }
+    summary { cursor: pointer; font-weight: 700; }
+    .quest-board { border: 1px solid var(--line); border-radius: 18px; padding: 18px; background: linear-gradient(180deg, #f8fbff, #ffffff); }
+    .quest-progress { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 16px; }
+    .quest-chip { border-radius: 999px; background: #e0f2fe; color: #075985; padding: 4px 10px; font-size: 12px; font-weight: 700; }
+    .quiz-game { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 18px; min-width: 0; }
+    .quiz-card { position: relative; min-height: 330px; perspective: 1200px; min-width: 0; cursor: pointer; }
+    .quiz-card input { position: absolute; opacity: 0; pointer-events: none; }
+    .quiz-face {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 12px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(160deg, #ffffff, #eef6ff);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+      backface-visibility: hidden;
+      transition: transform 0.45s ease;
+      overflow-wrap: anywhere;
+      overflow: hidden;
+    }
+    .quiz-back { background: linear-gradient(160deg, #f0fdf4, #ffffff); transform: rotateY(180deg); }
+    .quiz-card input:checked ~ .quiz-front { transform: rotateY(180deg); }
+    .quiz-card input:checked ~ .quiz-back { transform: rotateY(360deg); }
+    .quiz-level { color: var(--brand); font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .quiz-question { font-size: 17px; font-weight: 800; margin: 0; }
+    .quiz-answer { margin: 0; color: var(--ok); font-weight: 700; }
+    .quiz-hint { margin: 0; color: var(--muted); font-size: 13px; }
+    .quiz-action {
+      align-self: flex-start;
+      margin-top: auto;
+      border: 0;
+      border-radius: 999px;
+      background: var(--brand);
+      color: white;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+    .quiz-back .quiz-action { background: var(--ok); }
+    .memory-game { margin-top: 18px; display: grid; gap: 12px; }
+    .memory-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #ffffff;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .memory-card summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      background: #eff6ff;
+      color: #1e3a8a;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+    .memory-card summary::after { content: "揭示答案"; color: var(--brand); font-size: 12px; font-weight: 700; flex: 0 0 auto; }
+    .memory-card[open] summary::after { content: "收起"; color: var(--ok); }
+    .memory-meaning { padding: 12px 14px; color: var(--ink); overflow-wrap: anywhere; }
+    .mini-challenge { margin-top: 18px; border: 1px dashed #93c5fd; border-radius: 16px; padding: 14px; background: #f8fbff; }
+    .mini-challenge summary { color: var(--brand); }
+    .coverage-grid, .scenario-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 14px 0; min-width: 0; }
+    .coverage-item, .scenario-card { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: #ffffff; min-width: 0; overflow-wrap: anywhere; }
+    .coverage-item strong { color: var(--brand); }
+    .scenario-card summary { color: var(--brand); cursor: pointer; font-weight: 800; }
+    .compact-list { margin: 10px 0; }
+    .compact-list li { margin: 4px 0; }
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; }
+      nav { position: static; max-height: none; }
+      .memory-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Browser Harness 共学笔记</h1>
+    <p class="subtitle">26-05-19｜从安装连接、自然语言浏览器操作，到前端调试与 helper 沉淀</p>
+  </div>
+</header>
+<main>
+  <nav>
+    <h2>目录</h2>
+    <a href="#overview">1. 学习总览</a>
+    <a href="#position">2. 定位与模型</a>
+    <a href="#install">3. 安装与连接</a>
+    <a href="#basic">4. 基础操作</a>
+    <a href="#nl">5. 自然语言任务</a>
+    <a href="#x">6. X 场景</a>
+    <a href="#game">7. 页游 canvas</a>
+    <a href="#cdp">8. CDP 与 CloakBrowser</a>
+    <a href="#debug">9. 前端调试</a>
+    <a href="#helpers">10. 沉淀机制</a>
+    <a href="#snapshot">11. get_debug_snapshot</a>
+    <a href="#uninstall">12. 卸载清理</a>
+    <a href="#templates">13. 模板</a>
+    <a href="#quiz">14. 复习测验</a>
+  </nav>
+  <article>
+    <section id="overview">
+      <h2>1. 学习总览</h2>
+      <p>本次共学以 browser-harness 为核心，完成了从安装、连接隔离 Chrome、网页操作、自然语言任务、复杂网页提取、canvas 页游观察、前端调试，到 helper 沉淀的完整闭环。</p>
+      <div class="cards">
+        <div class="card"><h3>操作能力</h3><p>打开网页、截图观察、坐标点击、输入、滚动、JS 提取。</p></div>
+        <div class="card"><h3>分析能力</h3><p>去噪、详情页提取、无限滚动、证据链追踪、可信度判断。</p></div>
+        <div class="card"><h3>调试能力</h3><p>复现 bug、读取 console/network/storage、定位接口失败。</p></div>
+        <div class="card"><h3>沉淀能力</h3><p>理解 agent_helpers.py 与 domain-skills，并沉淀 get_debug_snapshot。</p></div>
+      </div>
+    </section>
+
+    <section id="position">
+      <h2>2. browser-harness 的定位</h2>
+      <p>browser-harness 是面向 LLM Agent 的真实浏览器控制工具，通过 CDP 连接真实 Chrome/Chromium，让 Agent 能像人一样观察和操作网页。</p>
+      <pre><code>用户自然语言任务
+    ↓
+Agent 规划与判断
+    ↓
+browser-harness CLI
+    ↓
+Chrome DevTools Protocol
+    ↓
+真实浏览器页面</code></pre>
+      <div class="callout">核心心法：<strong>截图观察 → 坐标点击 → 状态验证 → 必要时 JS/CDP 辅助</strong>。</div>
+      <table>
+        <tr><th>工具</th><th>典型思路</th></tr>
+        <tr><td>Selenium</td><td>人写选择器和固定流程</td></tr>
+        <tr><td>Playwright</td><td>人写测试脚本或自动化脚本</td></tr>
+        <tr><td>browser-harness</td><td>Agent 观察、操作、验证、沉淀</td></tr>
+      </table>
+    </section>
+
+    <section id="install">
+      <h2>3. 安装与连接隔离 Chrome</h2>
+      <h3>安装</h3>
+      <pre><code>git clone https://github.com/browser-use/browser-harness.git
+uv tool install -e "/e/CodeLab/AiLab/browser-harness-learn/browser-harness"</code></pre>
+      <p>本次安装后 CLI 位于 <code>/c/Users/Administrator/.local/bin/browser-harness</code>，可用 <code>browser-harness --doctor</code> 做连接诊断。</p>
+      <h3>启动隔离 Chrome</h3>
+      <pre><code>powershell.exe -NoProfile -Command "Start-Process -FilePath 'C:\Program Files\Google\Chrome\Application\chrome.exe' -ArgumentList '--remote-debugging-port=9222','--user-data-dir=E:\CodeLab\AiLab\browser-harness-learn\chrome-profile','about:blank'"</code></pre>
+      <h3>连接</h3>
+      <pre><code>BU_CDP_URL=http://127.0.0.1:9222 browser-harness &lt;&lt;'PY'
+print(page_info())
+PY</code></pre>
+      <p><code>BU_CDP_URL</code> 是环境变量，告诉 browser-harness 直接连接指定 CDP 地址。启动后应验证 <code>page_info()</code> 和截图，不假设页面已经正确加载。</p>
+    </section>
+
+    <section id="basic">
+      <h2>4. 基础操作能力</h2>
+      <h3>打开页面与截图</h3>
+      <pre><code>new_tab('https://github.com/browser-use/browser-harness')
+wait_for_load()
+print(page_info())
+capture_screenshot()</code></pre>
+      <h3>坐标点击</h3>
+      <pre><code>capture_screenshot()
+click_at_xy(x, y)
+capture_screenshot()</code></pre>
+      <p>点击前可用 <code>document.elementFromPoint(x, y)</code> 校准坐标命中元素。</p>
+      <h3>输入与验证</h3>
+      <p>输入后必须读回真实值，如 <code>input.value</code>、<code>select.value</code>、<code>checkbox.checked</code>。本次发现 <code>fill_input()</code> 在当前环境可能出现字符重复，因此更稳做法是 JS 清空后再 <code>type_text()</code>，并读回字段值确认。</p>
+    </section>
+
+    <section id="nl">
+      <h2>5. 从 API 到自然语言任务</h2>
+      <p>最终使用方式不是用户手写 Python，而是用户用自然语言描述目标，Agent 在背后调用 browser-harness。</p>
+      <pre><code>你：请打开页面并提取最新 10 条结果，过滤广告和重复内容。
+Agent：打开页面 → 截图 → 提取 → 去重 → 汇总 → 复盘用到的能力</code></pre>
+      <div class="callout ok">学习后期切换为：我给任务模板 → 用户输入 → Agent 执行 → 复盘。</div>
+    </section>
+
+    <section id="x">
+      <h2>6. X 搜索场景</h2>
+      <h3>登录墙</h3>
+      <p>遇到 X 登录页时，停止并让用户手动登录，不读取或输入密码、验证码。</p>
+      <h3>去噪</h3>
+      <ul>
+        <li>关键词命中。</li>
+        <li>语义相关。</li>
+        <li>排除广告、刷量、垃圾内容和关键词误伤。</li>
+        <li>区分高相关、低信息量和重复模板。</li>
+      </ul>
+      <h3>无限滚动</h3>
+      <pre><code>每一轮读取当前 DOM
+→ 用 status 链接去重保存
+→ 滚动
+→ 等待
+→ 再读取</code></pre>
+      <h3>证据链</h3>
+      <p>对“张雪机车年度冠军前景”追踪时，步骤是先搜索精确关键词，再找最像来源或信息量最高的帖子，打开详情页检查正文、时间、图片、视频、引用帖、外链和来源标注。</p>
+      <p>本次结论是：X 内传播较多，并出现“来源：美丽浙江”等转述线索，但缺少 WSBK 官方链接、美丽浙江原始链接或官方积分榜，因此可信度为中等，仍需外部官方来源核验。</p>
+    </section>
+
+    <section id="game">
+      <h2>7. 页游 canvas 操作经验</h2>
+      <p>访问 <code>https://codomino.99.com/</code> 后发现页面主体是 canvas，DOM 几乎没有文本。</p>
+      <div class="callout warn">canvas 游戏中按钮只是画在画布上，无法像普通 DOM 按钮一样稳定定位。</div>
+      <h3>Mummy Reborn 试玩判断</h3>
+      <table>
+        <tr><th>画面变化</th><th>判断</th></tr>
+        <tr><td>SPIN → STOP</td><td>回合进行中</td></tr>
+        <tr><td>出现 x5 / x13</td><td>触发特殊倍率或免费旋转</td></tr>
+        <tr><td>符号持续变化</td><td>自动结算中</td></tr>
+        <tr><td>STOP → SPIN</td><td>回合结束</td></tr>
+        <tr><td>底部数字变化</td><td>本轮赢分</td></tr>
+      </table>
+      <p>本次普通玩家级试玩中最终赢分显示为 <code>407,500</code>。</p>
+      <div class="callout danger">边界：即使用户确认是测试游戏，也只做普通玩家级观察和试玩；不做充值、刷分、绕过反作弊、自动挂机、多人对局自动化或刷资源。</div>
+    </section>
+
+    <section id="cdp">
+      <h2>8. CDP、CloakBrowser 与 BU_CDP_URL</h2>
+      <p>browser-harness 连接的是 CDP endpoint。只要某浏览器基于 Chromium、开启 remote debugging、提供 CDP 地址，就可尝试连接。</p>
+      <pre><code>BU_CDP_URL=http://127.0.0.1:9242 browser-harness &lt;&lt;'PY'
+print(page_info())
+PY</code></pre>
+      <p>CloakBrowser 基于 Chromium，支持 Playwright/Puppeteer 和 CDP remote connection，因此理论上可由 browser-harness 连接。</p>
+      <p>多浏览器并行可配合 <code>BU_NAME</code>：</p>
+      <pre><code>BU_NAME=cloak BU_CDP_URL=http://127.0.0.1:9242 browser-harness &lt;&lt;'PY'
+print(page_info())
+PY</code></pre>
+    </section>
+
+    <section id="debug">
+      <h2>9. 前端调试练习</h2>
+      <h3>简单 bug 页</h3>
+      <p>点击“加载用户信息”后请求 <code>/api/user</code>，服务端故意返回 500。</p>
+      <h3>标准调试流程</h3>
+      <pre><code>打开页面
+→ 截图初始状态
+→ 安装 console/fetch 监听
+→ 点击按钮
+→ 截图异常状态
+→ 读取 console/network/storage
+→ 判断原因</code></pre>
+      <h3>综合练习页</h3>
+      <p>页面地址：<code>http://127.0.0.1:8766</code></p>
+      <p>完成：表单填写、保存草稿、localStorage 验证、失败 API 调试。</p>
+      <div class="coverage-grid" aria-label="综合练习覆盖点">
+        <div class="coverage-item"><strong>表单字段</strong><br />#name、#email、#phone、#userType、#subscribed、#note</div>
+        <div class="coverage-item"><strong>成功链路</strong><br />保存草稿 → POST /api/draft → 200 → 写入 localStorage.lastDraft</div>
+        <div class="coverage-item"><strong>失败链路</strong><br />加载用户信息 → GET /api/user → 500 → database unavailable</div>
+      </div>
+      <div class="callout">最终判断：<code>/api/user</code> 返回 500，响应体提示 <code>database unavailable</code>，问题集中在后端接口或数据库依赖。</div>
+    </section>
+
+    <section id="helpers">
+      <h2>10. 沉淀机制</h2>
+      <p>browser-harness 提供 Agent 可编辑工作区：</p>
+      <pre><code>agent-workspace/agent_helpers.py
+agent-workspace/domain-skills/</code></pre>
+      <p>核心理解：</p>
+      <pre><code>写入不自动，复用自动。</code></pre>
+      <ul>
+        <li>helper 写入后，下次 browser-harness 自动加载。</li>
+        <li>domain-skills 启用后，<code>goto_url</code> 可按域名暴露相关 skill。</li>
+        <li>browser-harness 不会后台自动总结和写文件。</li>
+      </ul>
+      <div class="callout warn">适合沉淀通用调试能力、表单读回、滚动收集；不适合沉淀密码、token、一次性坐标、付款/删除/提交等高风险动作。</div>
+    </section>
+
+    <section id="snapshot">
+      <h2>11. get_debug_snapshot helper</h2>
+      <p>本次实际沉淀了一个 helper：</p>
+      <pre><code>def get_debug_snapshot():
+    from browser_harness.helpers import js
+
+    return js(r"""
+(() => ({
+  visibleText: document.body ? document.body.innerText : '',
+  console: window.__comprehensiveDebug?.console || window.__debugRun?.console || window.__debugPractice?.console || [],
+  network: window.__comprehensiveDebug?.network || window.__debugRun?.network || window.__debugPractice?.network || [],
+  localStorage: Object.fromEntries(Object.entries(localStorage)),
+  sessionStorage: Object.fromEntries(Object.entries(sessionStorage)),
+  url: location.href,
+  title: document.title
+}))()
+""")</code></pre>
+      <p>第一次验证遇到 <code>NameError: name 'js' is not defined</code>，原因是 <code>agent_helpers.py</code> 独立模块加载，修复为函数内部导入 <code>js</code>。</p>
+      <h3>自然语言调用</h3>
+      <pre><code>请复现这个问题，然后用 get_debug_snapshot 收集页面可见文本、console、network、localStorage 和 sessionStorage，并基于快照判断问题原因。</code></pre>
+    </section>
+
+    <section id="uninstall">
+      <h2>12. 卸载与清理</h2>
+      <pre><code>browser-harness --reload
+uv tool uninstall browser-harness
+rm -rf "/e/CodeLab/AiLab/browser-harness-learn/chrome-profile"
+rm -rf "/e/CodeLab/AiLab/browser-harness-learn/browser-harness"</code></pre>
+      <p>如需保留 helper，应先备份 <code>agent-workspace/agent_helpers.py</code>。</p>
+      <p>隔离 Chrome profile 可能包含登录后 cookie/session，若要清理登录痕迹，应删除该 profile。</p>
+    </section>
+
+    <section id="templates">
+      <h2>13. 可复用自然语言模板</h2>
+      <details open><summary>页面操作模板</summary><pre><code>请打开 [网址]，先截图观察页面状态，然后完成 [目标]。每一步操作后截图验证。如果遇到登录、付费、验证码或不可逆操作，先停下来问我。</code></pre></details>
+      <details><summary>前端调试模板</summary><pre><code>请复现 [bug]。先截图初始状态，然后执行用户操作，读取 console、network、storage，最后判断是 UI、JS、接口、鉴权还是数据问题。</code></pre></details>
+      <details><summary>证据链模板</summary><pre><code>请围绕 [说法] 做证据链追踪。先列出需要验证的事实，再找官方来源、媒体来源和用户转述，最后区分原始来源、二次传播和观点判断。</code></pre></details>
+      <details><summary>helper 调用模板</summary><pre><code>请复现这个问题，然后用 get_debug_snapshot 收集页面可见文本、console、network、localStorage 和 sessionStorage，并基于快照判断问题原因。</code></pre></details>
+    </section>
+
+    <section id="quiz">
+      <h2>14. 复习测验</h2>
+      <div class="quest-board">
+        <p>先在心里作答，再点击卡片翻面获得反馈。每张卡片对应一个能力点，建议按 Level 顺序完成。</p>
+        <div class="quest-progress" aria-label="复习关卡">
+          <span class="quest-chip">Level 1 连接</span>
+          <span class="quest-chip">Level 2 操作</span>
+          <span class="quest-chip">Level 3 X 场景</span>
+          <span class="quest-chip">Level 4 Canvas</span>
+          <span class="quest-chip">Level 5 调试</span>
+          <span class="quest-chip">Level 6 沉淀</span>
+          <span class="quest-chip">Level 7 工作流</span>
+          <span class="quest-chip">Level 8 卸载</span>
+        </div>
+        <div class="quiz-game">
+        <label class="quiz-card">
+          <input type="checkbox" />
+          <div class="quiz-face quiz-front">
+            <span class="quiz-level">Level 1 · 连接</span>
+            <p class="quiz-question">browser-harness 连接浏览器的关键接口是什么？</p>
+            <p class="quiz-hint">提示：它也是 Chrome DevTools 使用的协议。</p>
+            <span class="quiz-action">翻开答案</span>
+          </div>
+          <div class="quiz-face quiz-back">
+            <span class="quiz-level">答案</span>
+            <p class="quiz-answer">Chrome DevTools Protocol（CDP）。</p>
+            <p class="quiz-hint">只要 Chromium 浏览器暴露 CDP endpoint，browser-harness 就有机会连接。</p>
+            <span class="quiz-action">再看题目</span>
+          </div>
+        </label>
+
+        <label class="quiz-card">
+          <input type="checkbox" />
+          <div class="quiz-face quiz-front">
+            <span class="quiz-level">Level 2 · 操作</span>
+            <p class="quiz-question">坐标点击前后最容易漏掉哪两个验证？</p>
+            <p class="quiz-hint">提示：一个发生在点击前，一个发生在点击后。</p>
+            <span class="quiz-action">翻开答案</span>
+          </div>
+          <div class="quiz-face quiz-back">
+            <span class="quiz-level">答案</span>
+            <p class="quiz-answer">点击前用 elementFromPoint 或截图校准目标；点击后再次截图或读 DOM 验证状态变化。</p>
+            <p class="quiz-hint">输入操作也一样：不能只相信动作成功，要读回真实字段值。</p>
+            <span class="quiz-action">再看题目</span>
+          </div>
+        </label>
+
+        <label class="quiz-card">
+          <input type="checkbox" />
+          <div class="quiz-face quiz-front">
+            <span class="quiz-level">Level 3 · X 场景</span>
+            <p class="quiz-question">X 无限滚动采集为什么不能滚到底后再一次性读 DOM？</p>
+            <p class="quiz-hint">提示：现代列表会虚拟化。</p>
+            <span class="quiz-action">翻开答案</span>
+          </div>
+          <div class="quiz-face quiz-back">
+            <span class="quiz-level">答案</span>
+            <p class="quiz-answer">旧帖子可能已被虚拟列表移出 DOM，正确做法是每轮读取当前 DOM、用 status 链接去重保存、再滚动。</p>
+            <p class="quiz-hint">去噪时还要排除广告、刷量、垃圾内容和关键词误伤。</p>
+            <span class="quiz-action">再看题目</span>
+          </div>
+        </label>
+
+        <label class="quiz-card">
+          <input type="checkbox" />
+          <div class="quiz-face quiz-front">
+            <span class="quiz-level">Level 4 · Canvas</span>
+            <p class="quiz-question">canvas 页游为什么比普通网页更难操作？</p>
+            <p class="quiz-hint">提示：按钮并不是 DOM 节点。</p>
+            <span class="quiz-action">翻开答案</span>
+          </div>
+          <div class="quiz-face quiz-back">
+            <span class="quiz-level">答案</span>
+            <p class="quiz-answer">因为按钮绘制在 canvas 上，主要依靠截图、坐标点击和截图验证。</p>
+            <p class="quiz-hint">这也是为什么坐标校准和单步验证特别重要。</p>
+            <span class="quiz-action">再看题目</span>
+          </div>
+        </label>
+
+        <label class="quiz-card">
+          <input type="checkbox" />
+          <div class="quiz-face quiz-front">
+            <span class="quiz-level">Level 5 · 调试</span>
+            <p class="quiz-question">前端调试中如何判断是接口问题而不是按钮问题？</p>
+            <p class="quiz-hint">提示：看点击后是否产生 network 和 console 证据。</p>
+            <span class="quiz-action">翻开答案</span>
+          </div>
+          <div class="quiz-face quiz-back">
+            <span class="quiz-level">答案</span>
+            <p class="quiz-answer">按钮点击后 network 有请求，接口返回 500，console 捕获对应错误，说明按钮和 fetch 正常，问题集中在接口。</p>
+            <p class="quiz-hint">本次例子是 /api/user 返回 database unavailable。</p>
+            <span class="quiz-action">再看题目</span>
+          </div>
+        </label>
+
+        <label class="quiz-card">
+          <input type="checkbox" />
+          <div class="quiz-face quiz-front">
+            <span class="quiz-level">Level 6 · 沉淀</span>
+            <p class="quiz-question">helper 沉淀中“写入不自动，复用自动”是什么意思？</p>
+            <p class="quiz-hint">提示：区分“谁来写”和“何时加载”。</p>
+            <span class="quiz-action">翻开答案</span>
+          </div>
+          <div class="quiz-face quiz-back">
+            <span class="quiz-level">答案</span>
+            <p class="quiz-answer">Agent 或用户需要主动写入 helper；写入后 browser-harness 后续会自动加载。</p>
+            <p class="quiz-hint">本次沉淀的例子是 get_debug_snapshot()。</p>
+            <span class="quiz-action">再看题目</span>
+          </div>
+        </label>
+
+        <label class="quiz-card">
+          <input type="checkbox" />
+          <div class="quiz-face quiz-front">
+            <span class="quiz-level">Level 7 · 工作流</span>
+            <p class="quiz-question">自然语言驱动 browser-harness 时，最稳的基本流程是什么？</p>
+            <p class="quiz-hint">提示：不要一打开页面就操作。</p>
+            <span class="quiz-action">翻开答案</span>
+          </div>
+          <div class="quiz-face quiz-back">
+            <span class="quiz-level">答案</span>
+            <p class="quiz-answer">先截图观察，再单步操作，每步后验证；遇到登录、付费、验证码或不可逆动作先停下确认。</p>
+            <p class="quiz-hint">这也是今天所有练习的共同节奏。</p>
+            <span class="quiz-action">再看题目</span>
+          </div>
+        </label>
+
+        <label class="quiz-card">
+          <input type="checkbox" />
+          <div class="quiz-face quiz-front">
+            <span class="quiz-level">Level 8 · 卸载</span>
+            <p class="quiz-question">干净卸载 browser-harness 时，至少要处理哪三类内容？</p>
+            <p class="quiz-hint">提示：CLI、仓库、浏览器 profile。</p>
+            <span class="quiz-action">翻开答案</span>
+          </div>
+          <div class="quiz-face quiz-back">
+            <span class="quiz-level">答案</span>
+            <p class="quiz-answer">停止 daemon，卸载 uv tool，删除 browser-harness 仓库；如需清理登录痕迹，再删除隔离 Chrome profile。</p>
+            <p class="quiz-hint">若要保留 helper，删除仓库前先备份 agent_helpers.py。</p>
+            <span class="quiz-action">再看题目</span>
+          </div>
+        </label>
+        </div>
+
+        <h3>术语揭示小游戏</h3>
+        <p class="quiz-hint">先看术语，心里说出含义，再点击卡片揭示答案，形成延迟反馈。</p>
+        <div class="memory-game" aria-label="术语延迟反馈复习">
+          <details class="memory-card">
+            <summary>BU_CDP_URL</summary>
+            <div class="memory-meaning">指定 browser-harness 要连接的 CDP HTTP endpoint，例如 http://127.0.0.1:9222。</div>
+          </details>
+          <details class="memory-card">
+            <summary>BU_NAME</summary>
+            <div class="memory-meaning">区分不同 browser-harness daemon，适合多浏览器或多 profile 并行。</div>
+          </details>
+          <details class="memory-card">
+            <summary>agent_helpers.py</summary>
+            <div class="memory-meaning">沉淀通用 helper 的位置；写入不自动，复用自动。</div>
+          </details>
+          <details class="memory-card">
+            <summary>domain-skills</summary>
+            <div class="memory-meaning">沉淀站点级经验，如稳定 selector、URL pattern、hidden wait 和 site-specific trap。</div>
+          </details>
+          <details class="memory-card">
+            <summary>capture_screenshot()</summary>
+            <div class="memory-meaning">获取当前视口截图，是观察页面、验证点击结果和分析 canvas 页游的核心能力。</div>
+          </details>
+          <details class="memory-card">
+            <summary>click_at_xy(x, y)</summary>
+            <div class="memory-meaning">按 CSS 坐标点击页面；使用前应确认 devicePixelRatio，并在重要操作后截图验证。</div>
+          </details>
+          <details class="memory-card">
+            <summary>get_debug_snapshot()</summary>
+            <div class="memory-meaning">本次沉淀的 helper，用于读取 visibleText、console、network、localStorage、sessionStorage、url 和 title。</div>
+          </details>
+          <details class="memory-card">
+            <summary>f=live</summary>
+            <div class="memory-meaning">X 搜索 URL 中用于表示“最新”排序的参数，本次用于最新帖子扫描。</div>
+          </details>
+          <details class="memory-card">
+            <summary>elementFromPoint(x, y)</summary>
+            <div class="memory-meaning">点击前校准坐标命中元素的方法，可检查目标 tag、文本和最近链接。</div>
+          </details>
+          <details class="memory-card">
+            <summary>localStorage.lastDraft</summary>
+            <div class="memory-meaning">综合练习中保存草稿成功的本地证据，需要与页面提示和 /api/draft 200 一起判断。</div>
+          </details>
+        </div>
+
+        <h3>场景判断延迟反馈</h3>
+        <p class="quiz-hint">先判断“该怎么做”，再展开查看建议答案。</p>
+        <div class="scenario-grid" aria-label="场景判断复习">
+          <details class="scenario-card">
+            <summary>遇到登录墙</summary>
+            <p>停止自动操作，让用户手动登录；不读取、不输入密码、验证码或其他敏感凭据。</p>
+          </details>
+          <details class="scenario-card">
+            <summary>要验证输入是否成功</summary>
+            <p>不要只看动作返回；读取 input.value、select.value、checkbox.checked 等真实字段状态。</p>
+          </details>
+          <details class="scenario-card">
+            <summary>要追踪一个说法的可信度</summary>
+            <p>区分原始来源、搬运、二次转述和用户观点；优先找官方来源、媒体原链、时间和上下文。</p>
+          </details>
+          <details class="scenario-card">
+            <summary>想沉淀一次性坐标</summary>
+            <p>不建议沉淀。坐标容易随视口、布局和 canvas 状态变化失效，应沉淀稳定 selector、调试快照或通用流程。</p>
+          </details>
+        </div>
+
+        <details class="mini-challenge">
+          <summary>最终挑战：30 秒口述复盘</summary>
+          <p>请尝试不用看正文，口述 browser-harness 的完整链路：自然语言任务 → 截图观察 → 点击/输入/滚动 → 验证 → 调试 → helper 沉淀。</p>
+          <ul class="compact-list">
+            <li>能否说清 browser-harness、CDP、Chrome 三者关系？</li>
+            <li>能否说清截图、坐标点击、输入读回、滚动去重各自解决什么问题？</li>
+            <li>能否说清 debug snapshot 为什么比临时 JS 更适合复用？</li>
+          </ul>
+        </details>
+        <details class="mini-challenge">
+          <summary>场景判断挑战：什么时候不适合用 browser-harness？</summary>
+          <p>不适合高频爬虫、刷资源、绕过验证码/风控、批量账号操作、强确定性测试套件或不可逆高风险操作。它更适合人工协作式真实浏览器任务。</p>
+        </details>
+      </div>
+    </section>
+  </article>
+</main>
+</body>
+</html>
