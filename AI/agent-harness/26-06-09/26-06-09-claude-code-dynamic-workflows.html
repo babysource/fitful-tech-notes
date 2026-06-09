@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Claude Code Dynamic Workflows 学习笔记 · 2026-06-09</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel-2:#1f242d; --ink:#e6e8ec;
+    --muted:#8a93a6; --line:#2a313c; --accent:#7cc4ff; --warn:#ffb454;
+    --good:#7ce0a8; --bad:#ff8a8a; --code:#0b0d12;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif;overflow-x:hidden}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  #wrap{display:grid;grid-template-columns:280px 1fr;height:100vh;overflow:hidden}
+  #side{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:18px 16px;position:sticky;top:0;height:100vh}
+  #side h1{font-size:14px;margin:0 0 14px;color:var(--ink);letter-spacing:.5px}
+  #side .group{margin-top:14px} #side .group h2{font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin:0 0 8px}
+  #side a{display:block;font-size:13px;padding:6px 8px;border-radius:6px;color:var(--ink);margin-bottom:2px}
+  #side a:hover{background:var(--panel-2);text-decoration:none} #side a.active{background:var(--panel-2);color:var(--accent)}
+  #main{overflow-y:auto;padding:0 0 80px}
+  header.banner{position:sticky;top:0;z-index:5;background:rgba(15,17,21,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:18px 32px}
+  header.banner h1{margin:0;font-size:18px}.meta{font-size:12px;color:var(--muted);margin-top:6px}
+  main{padding:0 32px;max-width:1080px} section{padding:24px 0;border-bottom:1px solid var(--line)} section:last-child{border-bottom:none}
+  h2{font-size:20px;margin:0 0 8px} h3{font-size:16px;margin:18px 0 8px;color:var(--ink)} h4{font-size:14px;margin:14px 0 6px;color:var(--ink)}
+  p{margin:8px 0} ul,ol{padding-left:22px;margin:8px 0} li{margin:4px 0}
+  .tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);margin-right:6px}
+  .official{color:var(--accent);border-color:#2a4a66}.api{color:#caa9ff;border-color:#4b3a69}.observed{color:var(--warn);border-color:#5a4a2a}.real{color:var(--good);border-color:#2a5a3a}.community{color:#f5a3ff;border-color:#623566}.guess{color:var(--bad);border-color:#5a2a2a}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px} th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top} th{color:var(--muted);font-weight:600;background:var(--panel-2)} tr:hover td{background:rgba(124,196,255,.05)}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;font-size:12.5px;line-height:1.55;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--code);padding:1px 5px;border-radius:3px;font-size:90%} pre code{background:transparent;padding:0}
+  .callout{border-left:3px solid var(--accent);background:var(--panel-2);padding:10px 14px;border-radius:0 6px 6px 0;margin:12px 0;font-size:14px}
+  .warn{border-color:var(--warn)} .good{border-color:var(--good)} .bad{border-color:var(--bad)}
+  .quiz{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:14px;margin:14px 0}.quiz h4{margin:0 0 10px;color:var(--accent)}
+  .quiz .opts label{display:block;padding:6px 8px;margin:4px 0;border-radius:6px;background:var(--panel);cursor:pointer;border:1px solid transparent}.quiz .opts label:hover{border-color:var(--line)}.quiz .opts input{margin-right:8px}
+  .result{margin-top:8px;font-size:13px;padding:6px 10px;border-radius:6px;display:none}.right{background:rgba(124,224,168,.12);color:var(--good);display:block}.wrong{background:rgba(255,138,138,.12);color:var(--bad);display:block}
+  .sort-list{list-style:none;padding:0;margin:10px 0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}.sort-list li{padding:12px 14px;border-bottom:1px solid var(--line);cursor:grab;background:var(--panel);display:flex;align-items:center;gap:10px}.sort-list li:last-child{border-bottom:none}.handle{color:var(--muted);font-size:11px;width:18px}.sort-list li.dragging{opacity:.4}.sort-list li.over{border-top:2px solid var(--accent)}
+  .sort-check{margin-top:10px;display:inline-block;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);padding:6px 12px;border-radius:6px;cursor:pointer}.sort-res{margin-top:8px;font-size:13px}
+  @media (max-width:800px){#wrap{grid-template-columns:1fr}#side{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--line)}main{padding:0 18px}header.banner{padding:14px 18px}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <aside id="side">
+    <h1>📘 目录</h1>
+    <div class="group"><h2>基础</h2><a href="#ch1">1. 核心定义</a><a href="#ch2">2. 可用性与限制</a><a href="#ch3">3. 结构输出两路线</a></div>
+    <div class="group"><h2>实战</h2><a href="#ch4">4. 防御式模式</a><a href="#ch5">5. 错误清单</a><a href="#ch6">6. agent 与 model</a></div>
+    <div class="group"><h2>使用</h2><a href="#ch7">7. args 与保存</a><a href="#ch8">8. 用户能力</a><a href="#ch9">9. 社区核对</a></div>
+    <div class="group"><h2>收尾</h2><a href="#ch10">10. 口诀</a><a href="#ch11">11. 调试原则</a><a href="#ch12">12. 资源</a><a href="#quiz">🧪 测验</a></div>
+  </aside>
+
+  <div id="main">
+    <header class="banner">
+      <h1>Claude Code Dynamic Workflows 学习笔记</h1>
+      <div class="meta">2026-06-09 · 主题：动态工作流</div>
+    </header>
+
+    <main>
+<section id="ch1">
+  <h2>1. 核心定义 <span class="tag official">【官方事实】</span></h2>
+  <h3>1.1 Dynamic Workflows 是什么</h3>
+  <p><strong>Dynamic Workflows（动态工作流）</strong>是 Claude Code 用 JavaScript workflow script 大规模编排 subagents（子代理）的机制。Claude 为任务写脚本，runtime 在后台执行，主会话保持响应。</p>
+  <div class="callout"><strong>官方原文：</strong><br>A dynamic workflow is a JavaScript script that orchestrates subagents at scale. Claude writes the script for the task you describe, and a runtime executes it in the background while your session stays responsive.</div>
+  <ol><li>形式：JS 脚本</li><li>内容：编排 subagents</li><li>写法：Claude 为任务写</li><li>执行：runtime 后台执行</li><li>效果：主会话保持响应</li></ol>
+  <h3>1.2 与其他多代理机制的区别</h3>
+  <table><tr><th>机制</th><th>本质</th><th>编排权</th><th>中间结果</th><th>规模</th></tr><tr><td>Subagents</td><td>Claude 临时生成的工作者</td><td>Claude 逐轮</td><td>Claude 上下文窗口</td><td>每轮几个</td></tr><tr><td>Skills</td><td>Claude 遵循的指令</td><td>Claude 跟随 prompt</td><td>Claude 上下文窗口</td><td>接近 subagent</td></tr><tr><td>Agent teams</td><td>lead agent 监督 peer sessions</td><td>lead agent 逐轮</td><td>共享任务列表</td><td>少数长期对等</td></tr><tr><td><strong>Workflows</strong></td><td><strong>runtime 执行的脚本</strong></td><td><strong>脚本</strong></td><td><strong>脚本变量</strong></td><td><strong>数十到数百 agents</strong></td></tr></table>
+  <p><strong>核心差异：</strong>Workflow 把“计划”从 Claude 上下文移到代码里，因此中间结果保存在脚本变量中，编排本身可保存、可复用。</p>
+  <h3>1.3 适用边界</h3>
+  <p><strong>官方示例：</strong>全仓库 bug 扫描、500 文件迁移、多来源交叉核查研究、多角度方案评审。</p>
+  <p><strong>社区经验场景：</strong>大规模代码迁移 / 重构、深度研究与带引用报告、文档事实核查、对抗式验证、候选项排序、工单 triage、故障排查。</p>
+  <h3>1.4 常用 workflow 模式 <span class="tag community">【社区说法】</span></h3>
+  <table><tr><th>模式</th><th>核心做法</th><th>适合任务</th></tr><tr><td>分类后路由</td><td>先判断任务 / 对象类型，再分派给 specialist agent</td><td>工单 triage、规则分流、不同文件类型处理</td></tr><tr><td>并行拆分后汇总</td><td>按文件、模块、章节、候选项或检查维度 fan-out，再汇总</td><td>大规模迁移、批量审计、文档核查</td></tr><tr><td>对抗式验证</td><td>finder 提发现，verifier / refuter 专门尝试反驳</td><td>安全审计、事实核查、高风险结论确认</td></tr><tr><td>生成后筛选</td><td>多个 agent 生成候选，再按 rubric 评分、去重、筛选</td><td>命名、文案、设计方向、prompt 方案</td></tr><tr><td>锦标赛式比较</td><td>候选两两比较或分组晋级，避免一次性全局排序质量下降</td><td>大量候选排序、主观方案评审</td></tr><tr><td>循环直到无新发现</td><td>多轮 finder 搜索，连续若干轮没有新结果后停止</td><td>bug sweep、规则违反扫描、资料穷尽式研究</td></tr><tr><td>假设面板 + 反驳</td><td>多个 agent 提根因假设，再由 verifier/refuter 检验</td><td>故障排查、复杂问题诊断</td></tr><tr><td>读取者 / 执行者隔离</td><td>低权限 agent 读取不可信内容，高权限 agent 只接收清洗摘要</td><td>公开网页、issue、工单、用户提交内容处理</td></tr></table>
+  <p><strong>不适合：</strong>单文件小改动、目标模糊且不可验证的任务、纯确定性 IO / 定时 / ETL / SLA 工作流。</p>
+  <div class="callout warn">Dynamic Workflows 不是通用工作流引擎，不能替代 Dify / n8n / Airflow / Temporal。更精确地说：纯确定性集成不适合；AI 密集型研究、验证、分流、归纳可以适合。</div>
+</section>
+
+<section id="ch2">
+  <h2>2. 可用性、启用条件与运行限制</h2>
+  <h3>2.1 可用性 <span class="tag official">【官方事实】</span></h3>
+  <table><tr><th>项</th><th>说明</th></tr><tr><td>阶段</td><td>research preview</td></tr><tr><td>版本</td><td>Claude Code v2.1.154+</td></tr><tr><td>计划</td><td>所有付费计划可用；Pro 需在 <code>/config</code> 启用</td></tr><tr><td>Provider</td><td>Anthropic API、Amazon Bedrock、Google Cloud Vertex AI、Microsoft Foundry</td></tr><tr><td>表面</td><td>CLI、Desktop、IDE 扩展、<code>claude -p</code>、Agent SDK 等</td></tr></table>
+  <h3>2.2 script 机制 <span class="tag official">【官方事实】</span> <span class="tag api">【脚本原语事实】</span></h3>
+  <table><tr><th>机制</th><th>用途</th><th>证据等级</th></tr><tr><td>JavaScript script</td><td>编排 subagents</td><td>官方事实</td></tr><tr><td><code>args</code></td><td>saved workflow 接收输入</td><td>官方事实</td></tr><tr><td><code>agent()</code></td><td>启动 subagent</td><td>脚本原语事实</td></tr><tr><td><code>parallel()</code></td><td>barrier 型并行，等待全部完成</td><td>脚本原语事实</td></tr><tr><td><code>pipeline()</code></td><td>流水线逐项穿过多个 stage</td><td>脚本原语事实</td></tr><tr><td><code>phase()</code> / <code>log()</code></td><td>阶段分组 / 进度日志</td><td>脚本原语事实</td></tr><tr><td><code>budget</code></td><td>读取预算 total / spent() / remaining()</td><td>脚本原语事实</td></tr></table>
+  <div class="callout warn">公开 workflows 页面没有详细列出 <code>agent()</code>、<code>parallel()</code>、<code>pipeline()</code>、<code>budget</code> 的字段表；这些应标为 workflow script 中实测可用 / 可观察到的脚本原语，而不是官方页面正文直接给出的稳定 API 参考。</div>
+  <h3>2.3 parallel vs pipeline</h3>
+  <table><tr><th>函数</th><th>语义</th><th>适合场景</th></tr><tr><td><code>parallel(thunks)</code></td><td>barrier：全部并行，全部返回后继续</td><td>下一步必须看到所有结果，如全局去重 / 排序 / 早停</td></tr><tr><td><code>pipeline(items, ...stages)</code></td><td>每个 item 独立穿过各 stage，快项不等慢项</td><td>多文件迁移、逐项审查、发现后立即验证</td></tr></table>
+  <h3>2.4 限制与权限</h3>
+  <ul><li>最多 16 个并发 agents；每次运行最多 1000 agents。</li><li>无中途用户输入；阶段间人工签署应拆成多个 workflow。</li><li>脚本不能直接文件系统 / shell；读写文件、运行命令由 agent 通过工具完成。</li><li>同一 session 内可恢复；退出 Claude Code 后，下次 session 从头启动。</li><li>subagents 以 <code>acceptEdits</code> 模式运行，文件编辑自动批准；但 shell、network fetch、不在 allowlist 的 MCP tools 仍可能提示。</li><li>workflow 脚本不是 Node.js 全能力；不要依赖 filesystem / Node API，也避免 <code>Date.now()</code>、<code>Math.random()</code> 等非确定性调用。</li></ul>
+</section>
+
+<section id="ch3">
+  <h2>3. workflow script 的结构输出：两条路线</h2>
+  <h3>3.1 schema 的定位 <span class="tag api">【脚本原语事实】</span> <span class="tag observed">【实测现象】</span></h3>
+  <p><code>schema</code> 是 runtime 支持的结构化输出机制。是否使用 schema 是工程取舍：schema 路线更干净、更强约束，但 schema mismatch 可能导致 agent 失败；防御式 JSON 路线更宽容，但要自己写 <code>tryParseJson</code>、<code>isValidFinding</code>、fallback。</p>
+  <p>实测中，schema 模式可能因结构化输出不匹配导致 agent 失败；防御式 JSON 路线适合更重视容错与兜底产物的场景。</p>
+  <h3>3.2 路线 A：schema 结构化输出路线</h3>
+  <pre><code>const result = await agent('...', {
+  label: 'review:item-a',
+  phase: 'Review',
+  schema: SOME_JSON_SCHEMA,
+})</code></pre>
+  <table><tr><th>优点</th><th>风险</th></tr><tr><td>返回对象更干净；runtime 帮忙验证 schema；下游代码更简单</td><td>schema mismatch 可能导致 agent 失败；schema 太复杂或 prompt 不匹配时更敏感</td></tr></table>
+  <h3>3.3 路线 B：防御式 JSON 路线</h3>
+  <pre><code>agent 返回（可能是字符串）
+  → tryParseJson 提取 JSON
+  → isValidFinding / isValidVerdict 严格过滤
+  → buildLocalReport 本地兜底</code></pre>
+  <p>适合 schema 模式在当前环境不稳定、希望失败不拖垮整个 workflow、目标是尽量返回 useful artifact 的场景。</p>
+  <h3>3.4 StructuredOutput 的正确理解</h3>
+  <pre><code>Error: agent({schema}): subagent completed without calling
+       StructuredOutput (after 2 in-conversation nudges)</code></pre>
+  <div class="callout warn"><code>StructuredOutput</code> 不是用户 prompt 里应该手动要求调用的普通业务工具；它更像 runtime 在 schema 模式下注入 / 期待的内部结构化输出机制。</div>
+</section>
+
+<section id="ch4">
+  <h2>4. 防御式 workflow 模式 <span class="tag observed">【实测现象】</span></h2>
+  <h3>4.1 tryParseJson</h3>
+  <pre><code>function tryParseJson(s) {
+  if (s === null || s === undefined) return null
+  if (typeof s === 'object') return s
+  if (typeof s !== 'string') return null
+  try { return JSON.parse(s) } catch (_) {}
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i]
+    if (ch !== '{' && ch !== '[') continue
+    // ...扫描平衡 JSON 块
+  }
+  return null
+}</code></pre>
+  <h3>4.2 isValidFinding / isValidVerdict</h3>
+  <pre><code>const SEVERITIES = ['low', 'medium', 'high', 'critical']
+const CONFIDENCES = ['low', 'medium', 'high']
+const STATUSES = ['confirmed', 'uncertain', 'refuted']
+
+function isValidFinding(f) {
+  return !!f
+    && typeof f.id === 'string' && f.id.length > 0
+    && typeof f.summary === 'string' && f.summary.length > 0
+    && typeof f.severity === 'string' && SEVERITIES.includes(f.severity)
+    && typeof f.confidence === 'string' && CONFIDENCES.includes(f.confidence)
+    && typeof f.rationale === 'string' && f.rationale.length > 0
+}</code></pre>
+  <h3>4.3 buildLocalReport</h3>
+  <pre><code>const report = isValidReport(reportParsed)
+  ? reportParsed
+  : buildLocalReport(annotated)</code></pre>
+  <p>核心思想：不完全依赖 synthesize agent；即便 synthesize agent 失败，脚本也能从 annotated findings 拼出 useful artifact。</p>
+  <h3>4.4 prompt 三件套</h3>
+  <pre><code>TASK: &lt;具体目标&gt;
+Return ONE JSON object with exactly these fields:
+{ id, summary, severity, confidence, rationale }
+BOUNDARY:
+- Return ONLY the JSON object. No prose, no markdown fences.
+- Do not invent file paths, line numbers, or function names.</code></pre>
+</section>
+
+<section id="ch5">
+  <h2>5. 实测错误清单 <span class="tag observed">【实测现象】</span></h2>
+  <table><tr><th>做法</th><th>风险 / 后果</th><th>推荐处理</th></tr><tr><td>使用 schema 路线</td><td>schema mismatch 可能导致 agent 失败</td><td>保持 schema 简洁，并让 prompt 与 schema 对齐；若失败容忍度更重要，可改用防御式 JSON 路线</td></tr><tr><td>业务 prompt 中要求“调用 StructuredOutput 工具”</td><td>可能误导 agent</td><td>不在业务 prompt 中提 StructuredOutput</td></tr><tr><td>告诉 agent “runtime 会校验你的输出”</td><td>污染 prompt、引入无关机制描述</td><td>只明确业务 shape / boundary</td></tr><tr><td>在业务 prompt 中混入 runtime 内部机制描述</td><td>污染 prompt、引入无关信息</td><td>prompt 只描述任务、返回结构和边界；脚本层负责解析、过滤和兜底</td></tr></table>
+  <h3>findings 为空</h3><p>findings 为空 ≠ 一定没发现问题；可能是 agent 返回字符串 / prose / 非结构化对象，导致过滤失败。应看 transcript、加 <code>tryParseJson</code>、强化 Return ONLY JSON。</p>
+</section>
+
+<section id="ch6">
+  <h2>6. agent() 字段与模型路由</h2>
+  <h3>6.1 默认模型行为 <span class="tag official">【官方事实】</span></h3>
+  <div class="callout"><strong>官方原文：</strong><br>Every agent in a workflow uses your session's model unless the script routes a stage to a different one.</div>
+  <h3>6.2 agent() 字段 <span class="tag api">【脚本原语事实】</span></h3>
+  <pre><code>await agent(prompt, {
+  label: 'review:item-a',
+  phase: 'Review',
+  model: 'claude-haiku-4-5',
+  schema: SOME_SCHEMA,
+})</code></pre>
+  <div class="callout warn">本次最小 workflow 验证通过：<code>agent(prompt, { label, phase, schema })</code> 可返回结构化对象，<code>agent(prompt, { label, phase, model })</code> 可正常返回文本。官方 workflows 页面说明了 phase 展示和 model 路由概念，但没有把 <code>label</code> / <code>phase</code> / <code>model</code> / <code>schema</code> 列为稳定公开 API 字段表。</div>
+  <h3>6.3 模型路由</h3>
+  <pre><code>const MODEL_REGISTRY = {
+  cheap: 'claude-haiku-4-5',
+  strong: 'claude-opus-4-8',
+}
+
+await agent(prompt, {
+  label: 'triage:item-b',
+  phase: 'Triage',
+  model: MODEL_REGISTRY.cheap,
+})</code></pre>
+</section>
+
+<section id="ch7">
+  <h2>7. args、保存与触发方式 <span class="tag official">【官方事实】</span></h2>
+  <h3>7.1 args</h3><p>saved workflow 可通过 <code>args</code> 接收输入。脚本中读取全局变量 <code>args</code>；未传入时为 <code>undefined</code>。</p>
+  <pre><code>&gt; Run /triage-issues on issues 1024, 1025, and 1030</code></pre>
+  <h3>7.2 保存位置</h3><table><tr><th>位置</th><th>路径</th><th>特点</th></tr><tr><td>项目级</td><td><code>.claude/workflows/</code></td><td>随项目共享</td></tr><tr><td>用户级</td><td><code>~/.claude/workflows/</code></td><td>多项目可用，仅自己可见</td></tr><tr><td>同名优先</td><td>项目级</td><td>项目 workflow 覆盖同名用户 workflow</td></tr></table>
+  <h3>7.3 触发方式</h3><ul><li><code>/deep-research</code> 内置 workflow</li><li>prompt 中包含 <code>ultracode</code></li><li>自然语言明确要求 “use a workflow” / “run a workflow” / “fan out agents”</li><li><code>/effort ultracode</code>：对实质性任务自动规划 workflow</li><li>保存后通过 <code>/&lt;name&gt;</code> 运行</li></ul>
+</section>
+
+<section id="ch8">
+  <h2>8. 用户侧核心能力</h2>
+  <h3>8.1 判断何时用</h3><pre><code>适合：多文件 / 大规模 / 可并行 / 可验证 / 需要对抗验证或多角度比较
+不适合：单文件小改动 / 目标模糊 / 纯确定性集成 / 成本高于收益</code></pre>
+  <h3>8.2 写 workflow request 的 8 个要素</h3>
+  <table><tr><th>要素</th><th>含义</th></tr><tr><td>Goal</td><td>我要完成什么</td></tr><tr><td>Scope</td><td>检查哪里、不检查哪里</td></tr><tr><td>Permission</td><td>只读还是允许修改</td></tr><tr><td>Target items</td><td>处理对象</td></tr><tr><td>Checks</td><td>检查项</td></tr><tr><td>Evidence</td><td>每个发现必须有证据</td></tr><tr><td>Verification</td><td>高危要反驳 / 独立验证</td></tr><tr><td>Output</td><td>最终报告格式</td></tr></table>
+  <h3>8.3 审查 script</h3>
+  <ol><li>meta / phases 是否清楚。</li><li>agent() 字段是否符合实测可用写法，如 <code>{ label, phase, model, schema }</code>。</li><li>如果使用 schema：schema 是否过复杂，prompt 是否与 schema 一致。</li><li>如果不用 schema：是否有 <code>tryParseJson</code>。</li><li>是否有严格过滤与 fallback。</li><li>prompt 是否有 TASK / shape / BOUNDARY，且不要提 runtime 内部机制。</li><li>parallel / pipeline 是否选对。</li></ol>
+  <h3>8.4 不可信输入隔离</h3><p>处理公开网页、issue、工单等不可信内容时，应隔离低权限读取 agent 与高权限执行 agent，避免原始恶意内容直接影响高权限操作。</p>
+</section>
+
+<section id="ch9">
+  <h2>9. 社区文章核对结论 <span class="tag community">【社区说法】</span></h2>
+  <h3>9.1 可采纳为社区经验</h3>
+  <ul><li>动态 workflow 把计划移入代码。</li><li>多 agent 隔离上下文，降低长上下文漂移。</li><li>适合迁移、审计、研究、事实核查、对抗验证。</li><li>常见模式：fan-out 汇总、对抗验证、生成筛选、锦标赛比较、循环直到无新发现。</li><li>成本较高，小任务不值得。</li><li><code>/workflows</code> 可查看进度，按 <code>s</code> 保存。</li></ul>
+  <h3>9.2 不要直接写成官方事实</h3>
+  <ul><li>Bun 从 Zig 到 Rust 重写使用 Dynamic Workflows 的具体数据。</li><li>Anthropic 内部团队已使用数月。</li><li>某个案例具体用了多少 agents、多少 tokens、耗时多久。</li><li>“Claude API 支持 workflows”这类笼统表述；更准确是 Claude Code surfaces、<code>claude -p</code>、Agent SDK。</li><li>“恢复后继续”必须限定为同一 Claude Code session 内。</li></ul>
+</section>
+
+<section id="ch10">
+  <h2>10. 关键口诀</h2>
+  <div class="callout"><strong>1. 脚本是本体，代理是工人。</strong><br>workflow script 负责调度。真正读文件、改文件、跑命令的是 subagent。</div>
+  <div class="callout good"><strong>2. 结构输出有两路，按风险选。</strong><br>schema 路线：<code>agent(prompt, { schema })</code>，返回更干净但失败更硬。<br>防御式 JSON 路线：不传 schema，靠 <code>tryParseJson</code> / <code>isValidX</code> / fallback 兜底。</div>
+  <div class="callout"><strong>3. 高危要反驳，不只确认。</strong><br>verifier prompt：<code>TRY TO REFUTE</code>、<code>Do NOT just agree</code>。</div>
+</section>
+
+<section id="ch11">
+  <h2>11. 调试原则</h2>
+  <h3>11.1 证据等级</h3><pre><code>官方事实 > 脚本原语事实 > 实测现象 > 社区说法 > 教学推测</code></pre>
+  <h3>11.2 排障顺序</h3><ol><li>先看 <code>/workflows</code> 进度和 agent 详情。</li><li>再看 transcript 中 agent 实际返回了什么。</li><li>判断是 schema 路线失败，还是防御式 JSON 路线解析 / 过滤失败。</li><li>schema 失败：简化 schema、强化 prompt，或改走防御式 JSON。</li><li>findings 空：检查 <code>tryParseJson</code>、<code>isValidFinding</code>、prompt shape。</li></ol>
+  <h3>11.3 成本与范围</h3><ul><li>大任务先小范围试跑。</li><li><code>/workflows</code> 视图看每个 agent 的 token 使用。</li><li>可在 prompt 中要求某些阶段使用较小模型。</li><li>可用 <code>budget</code> 在脚本中控制后续 agent 调用。</li></ul>
+</section>
+
+<section id="ch12">
+  <h2>12. 相关资源</h2>
+  <h3>12.1 官方文档</h3><ul><li><a href="https://code.claude.com/docs/zh-CN/workflows" target="_blank">Claude Code Dynamic Workflows 官方文档</a></li><li><a href="https://code.claude.com/docs/zh-CN/sub-agents" target="_blank">Claude Code sub-agents</a></li><li><a href="https://code.claude.com/docs/zh-CN/tools-reference" target="_blank">Claude Code tools-reference</a></li></ul>
+  <h3>12.2 社区文章</h3><ul><li>https://x.com/PandaTalk8/status/2063918562318946740</li><li>https://x.com/trq212/status/2061907337154367865</li><li>https://x.com/0xCodez/status/2062127385923776831</li><li>https://x.com/knoYee_/status/2062144250532561370</li><li>https://x.com/AlphaSignalAI/status/2060361091474223504</li><li>https://x.com/so_ainsight/status/2060598271161291042</li></ul>
+</section>
+
+<section id="quiz">
+  <h2>🧪 复习测验</h2>
+
+  <div class="quiz" data-q="q1" data-answer="C" data-explain="Dynamic Workflows 的本质是把编排计划放进 JavaScript 脚本，由 runtime 执行；subagents 是被脚本调度的工作者。">
+    <h4>Q1：Dynamic Workflows 最核心的机制是什么？</h4>
+    <div class="opts"><label><input type="radio" name="q1" value="A">A. 让 Claude 使用更强模型</label><label><input type="radio" name="q1" value="B">B. 把普通 prompt 保存成模板</label><label><input type="radio" name="q1" value="C">C. 把编排计划放进 JavaScript 脚本，由脚本调度 subagents</label><label><input type="radio" name="q1" value="D">D. 让所有中间结果进入主对话上下文</label></div><div class="result"></div>
+  </div>
+
+  <div class="quiz" data-q="q2" data-answer="A,C,D" data-explain="工作流适合大规模、可并行、可验证、需要多角度或对抗验证的任务；单文件小改动和纯确定性定时流程不适合。">
+    <h4>Q2：哪些任务更适合使用 Dynamic Workflows？（多选）</h4>
+    <div class="opts"><label><input type="checkbox" name="q2" value="A">A. 全仓库 bug / 安全审计</label><label><input type="checkbox" name="q2" value="B">B. 改一个 README 标点</label><label><input type="checkbox" name="q2" value="C">C. 500 文件迁移或同类批量改造</label><label><input type="checkbox" name="q2" value="D">D. 需要多来源交叉核查的研究报告</label></div><div class="result"></div>
+  </div>
+
+  <div class="quiz" data-q="q3" data-answer="B" data-explain="schema 路线更强约束、更干净，但 mismatch 时失败更硬；防御式 JSON 路线更重视容错，需要脚本层解析、过滤和兜底。">
+    <h4>Q3：关于 schema 路线与防御式 JSON 路线，哪种说法正确？</h4>
+    <div class="opts"><label><input type="radio" name="q3" value="A">A. schema 是官方禁止使用的</label><label><input type="radio" name="q3" value="B">B. schema 更强约束；防御式 JSON 更偏容错</label><label><input type="radio" name="q3" value="C">C. 防御式 JSON 不需要 prompt 描述返回结构</label><label><input type="radio" name="q3" value="D">D. 使用 schema 后不会失败</label></div><div class="result"></div>
+  </div>
+
+  <div class="quiz" data-q="q4" data-answer="A,B,D" data-explain="parallel 是 barrier；pipeline 是流水线。只有下一阶段确实需要全部结果时才使用 parallel 作为 barrier。">
+    <h4>Q4：关于 <code>parallel()</code> 与 <code>pipeline()</code>，哪些说法正确？（多选）</h4>
+    <div class="opts"><label><input type="checkbox" name="q4" value="A">A. <code>parallel()</code> 会等待全部并行任务完成</label><label><input type="checkbox" name="q4" value="B">B. <code>pipeline()</code> 允许快的 item 先进入后续 stage</label><label><input type="checkbox" name="q4" value="C">C. 默认所有任务都应使用 <code>parallel()</code></label><label><input type="checkbox" name="q4" value="D">D. 全局去重、全局排序通常需要 barrier</label></div><div class="result"></div>
+  </div>
+
+  <div class="quiz" data-q="q5" data-answer="B" data-explain="停止后只能在同一 Claude Code session 中恢复；退出 Claude Code 后，下个 session 会从头启动 workflow。">
+    <h4>Q5：关于 workflow 恢复能力，哪种说法正确？</h4>
+    <div class="opts"><label><input type="radio" name="q5" value="A">A. 可跨任意 Claude Code session 断点续跑</label><label><input type="radio" name="q5" value="B">B. 只在同一 Claude Code session 内可恢复</label><label><input type="radio" name="q5" value="C">C. 停止后所有已完成 agent 结果都会丢失</label><label><input type="radio" name="q5" value="D">D. workflow 运行时可以随时插入用户输入</label></div><div class="result"></div>
+  </div>
+
+  <div class="quiz" data-q="q6" data-answer="A,B,C" data-explain="官方页面明确说明 workflow 是 JS 脚本、保存位置和 args；label/phase/model/schema 字段属于脚本原语事实，不是官方页面列出的稳定 API 字段表。">
+    <h4>Q6：哪些属于官方 workflows 页面明确说明的内容？（多选）</h4>
+    <div class="opts"><label><input type="checkbox" name="q6" value="A">A. workflow 是 JavaScript script</label><label><input type="checkbox" name="q6" value="B">B. saved workflow 可通过全局 <code>args</code> 接收输入</label><label><input type="checkbox" name="q6" value="C">C. 可保存到 <code>.claude/workflows/</code> 或 <code>~/.claude/workflows/</code></label><label><input type="checkbox" name="q6" value="D">D. 官方页面列出了 <code>label</code> / <code>phase</code> / <code>model</code> / <code>schema</code> 的稳定字段表</label></div><div class="result"></div>
+  </div>
+
+  <h3>Q7：把防御式 JSON 路线按数据流排序</h3>
+  <ul class="sort-list" id="sort-q7"><li data-id="agent" draggable="true"><span class="handle">≡</span> agent 返回（可能是字符串或 prose）</li><li data-id="parse" draggable="true"><span class="handle">≡</span> tryParseJson 提取 JSON</li><li data-id="valid" draggable="true"><span class="handle">≡</span> isValidFinding / isValidVerdict 严格过滤</li><li data-id="report" draggable="true"><span class="handle">≡</span> buildLocalReport / fallback 兜底</li></ul>
+  <button class="sort-check" data-target="q7" data-answer="agent,parse,valid,report">检查顺序</button><div class="sort-res" id="res-q7"></div>
+</section>
+    </main>
+  </div>
+</div>
+<script>
+  const links=document.querySelectorAll('#side a[href^="#"]');
+  const sections=Array.from(links).map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const main=document.getElementById('main');
+  function onScroll(){const y=main.scrollTop+80;let active=sections[0];for(const s of sections){if(s.offsetTop<=y)active=s}links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+active.id));}
+  main.addEventListener('scroll',onScroll);onScroll();
+  document.querySelectorAll('.quiz').forEach(quiz=>{const name=quiz.dataset.q;const correct=quiz.dataset.answer.split(',').map(s=>s.trim());const explain=quiz.dataset.explain||'';quiz.querySelectorAll('input').forEach(inp=>{inp.addEventListener('change',()=>{const vals=Array.from(quiz.querySelectorAll('input:checked')).map(i=>i.value);const res=quiz.querySelector('.result');const isMulti=quiz.querySelector('input[type=checkbox]')!==null;let ok;if(isMulti){const setS=new Set(vals),setC=new Set(correct);ok=setS.size===setC.size&&[...setS].every(v=>setC.has(v));}else{ok=vals.length===1&&correct.includes(vals[0]);}res.className='result '+(ok?'right':'wrong');res.textContent=(ok?'✓ 正确。':'✗ 不对。')+' '+explain;});});});
+  document.querySelectorAll('.sort-list').forEach(list=>{let dragging=null;list.querySelectorAll('li').forEach(li=>{li.addEventListener('dragstart',e=>{dragging=li;li.classList.add('dragging');e.dataTransfer.effectAllowed='move';});li.addEventListener('dragend',()=>{li.classList.remove('dragging');list.querySelectorAll('li').forEach(x=>x.classList.remove('over'));});li.addEventListener('dragover',e=>{e.preventDefault();list.querySelectorAll('li').forEach(x=>x.classList.remove('over'));li.classList.add('over');});li.addEventListener('drop',e=>{e.preventDefault();if(dragging&&dragging!==li){const rect=li.getBoundingClientRect();const after=(e.clientY-rect.top)>rect.height/2;list.insertBefore(dragging,after?li.nextSibling:li);}});});});
+  document.querySelectorAll('.sort-check').forEach(btn=>{btn.addEventListener('click',()=>{const target=btn.dataset.target;const answer=btn.dataset.answer.split(',');const list=document.getElementById('sort-'+target);const current=Array.from(list.querySelectorAll('li')).map(li=>li.dataset.id);const res=document.getElementById('res-'+target);const ok=current.join(',')===answer.join(',');res.innerHTML=ok?'<span style="color:var(--good)">✓ 顺序正确</span>':'<span style="color:var(--bad)">✗ 正确顺序：</span> '+answer.map(s=>list.querySelector('li[data-id="'+s+'"]').textContent.trim()).join(' → ');});});
+</script>
+</body>
+</html>

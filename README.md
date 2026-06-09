@@ -15,7 +15,8 @@
 | 类目 | 笔记 | 日期 | MD | HTML |
 |---|---|---|---|---|
 | <span id="model-training">🧬 模型训练</span> | MiniMind / LLM 工程化训练 | 26-05-15 | [MD](./AI/model-training/26-05-15/26-05-15-minimind-llm-training-notes.md) | [HTML](https://babysource.github.io/fitful-tech-notes/AI/model-training/26-05-15/26-05-15-minimind-llm-training-notes.html) |
-| <span id="agent-harness">🐎 驾驭智能</span> | Browser Harness 共学笔记 | 26-05-19 | [MD](./AI/agent-harness/26-05-19/26-05-19-browser-harness.md) | [HTML](https://babysource.github.io/fitful-tech-notes/AI/agent-harness/26-05-19/26-05-19-browser-harness.html) |
+| <span id="agent-harness">🐎 驾驭智能</span> | Claude Code Dynamic Workflows 学习笔记 | 26-06-09 | [MD](./AI/agent-harness/26-06-09/26-06-09-claude-code-dynamic-workflows.md) | [HTML](https://babysource.github.io/fitful-tech-notes/AI/agent-harness/26-06-09/26-06-09-claude-code-dynamic-workflows.html) |
+|  | Browser Harness 共学笔记 | 26-05-19 | [MD](./AI/agent-harness/26-05-19/26-05-19-browser-harness.md) | [HTML](https://babysource.github.io/fitful-tech-notes/AI/agent-harness/26-05-19/26-05-19-browser-harness.html) |
 
 ---
 
@@ -33,6 +34,14 @@
 ---
 
 **私教式辅学**：构建体系化知识的个性化研习方案并实施渐进式辅学指导。
+
+#### 用法说明
+
+- **适用场景**：需要围绕某个主题开展体系化学习、知识讲解、路径规划或渐进式答疑。
+- **调用方式**：直接提出辅学目标或问题，也可使用 `/fitful-tech-tutor` 显式唤起。
+- **场景示例**：
+
+  > “请指导我系统学习 xxx。”
 
 - **Windows**
 
@@ -55,6 +64,14 @@ ln -s ".agents/skills/fitful-tech-tutor" "$HOME/.claude/skills/fitful-tech-tutor
 ---
 
 **伴学式笔记**：将人机学习会话沉淀为结构化的 Markdown 笔记与可视化的 HTML 复习页面。
+
+#### 用法说明
+
+- **适用场景**：需要将完整学习会话整理为详尽、结构化、可复习的学习笔记与网页页面。
+- **调用方式**：明确提出生成、整理或更新学习笔记，也可使用 `/fitful-tech-noter` 显式唤起。
+- **场景示例**：
+
+  > “将本次学的 xxx 整理成学习笔记。”
 
 - **Windows**
 
