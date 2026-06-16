@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OKF（Open Knowledge Format）学习笔记</title>
+<style>
+:root{--bg:#0f172a;--bg2:#1e1b4b;--panel:#ffffff;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--accent:#7c3aed;--accent2:#06b6d4;--soft:#f8fafc;--code:#111827;--good:#16a34a;--warn:#ca8a04}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;color:var(--ink);background:linear-gradient(135deg,var(--bg),var(--bg2) 52%,#0e7490)}
+body{overflow:hidden}.app{height:100vh;display:grid;grid-template-columns:300px 1fr;gap:18px;padding:18px}.sidebar,.main{min-height:0;border:1px solid rgba(255,255,255,.32);border-radius:20px;background:rgba(255,255,255,.96);box-shadow:0 24px 60px rgba(15,23,42,.28)}
+.sidebar{overflow:auto;padding:18px}.brand{padding:18px;border-radius:16px;color:white;background:linear-gradient(135deg,var(--accent),var(--accent2));margin-bottom:16px}.brand h1{font-size:20px;line-height:1.25;margin:0 0 8px}.brand p{margin:0;color:#e0f2fe;font-size:13px}.toc h2{font-size:13px;color:#475569;margin:18px 0 8px}.toc a{display:block;text-decoration:none;color:#334155;font-size:13px;line-height:1.35;padding:8px 10px;border-radius:10px}.toc a:hover{background:#eef2ff;color:#3730a3}.main{overflow:auto}.hero{position:sticky;top:0;z-index:3;padding:24px 32px;color:white;background:linear-gradient(135deg,rgba(15,23,42,.98),rgba(49,46,129,.96));border-radius:20px 20px 0 0;border-bottom:1px solid rgba(255,255,255,.18)}
+.hero h1{margin:0 0 8px;font-size:28px}.hero p{margin:0;color:#cbd5e1}.content{max-width:1080px;margin:0 auto;padding:28px 34px 60px}.section{margin:0 0 34px;padding:24px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 10px 28px rgba(15,23,42,.06)}
+h2{margin:0 0 14px;font-size:22px;color:#1e1b4b}h3{margin:22px 0 10px;font-size:17px;color:#334155}p,li{line-height:1.75}p{margin:9px 0}.note{padding:14px 16px;border-left:4px solid var(--accent);border-radius:12px;background:#f5f3ff;color:#312e81}.warn{padding:14px 16px;border-left:4px solid var(--warn);border-radius:12px;background:#fffbeb;color:#78350f}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.card{padding:15px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#fff,#f8fafc)}.card strong{display:block;color:#1e1b4b;margin-bottom:6px}table{width:100%;border-collapse:collapse;margin:12px 0;background:white;border-radius:12px;overflow:hidden}th,td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}th{background:#f1f5f9;color:#334155}code{font-family:ui-monospace,"SF Mono",Consolas,monospace;background:#eef2ff;color:#3730a3;padding:2px 5px;border-radius:5px}pre{max-width:100%;overflow:auto;background:var(--code);color:#e5e7eb;padding:16px;border-radius:14px;line-height:1.55;font-size:13px}pre code{background:transparent;color:inherit;padding:0}.flow{display:grid;gap:8px;max-width:640px}.flow div{padding:10px 12px;border-radius:12px;background:#ecfeff;border:1px solid #bae6fd}.flow div:not(:last-child)::after{content:"↓";display:block;text-align:center;color:#0891b2;font-weight:800;margin-top:8px}.pill{display:inline-block;margin:3px 4px 3px 0;padding:4px 9px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:12px;font-weight:650}.quiz{display:grid;gap:12px}.q{padding:16px;border:1px solid #dbeafe;border-radius:16px;background:#eff6ff}.q button{border:0;border-radius:10px;padding:8px 12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-weight:700;cursor:pointer}.answer{display:none;margin-top:10px;padding:12px;border-radius:12px;background:#fff;color:#0f172a}.answer.show{display:block}.footer{color:#475569;font-size:13px;text-align:center;padding:20px}.kbd{font-size:12px;color:#475569}.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:900px){body{overflow:auto}.app{height:auto;display:block;padding:10px}.sidebar{margin-bottom:12px;max-height:none}.main{overflow:visible}.hero{position:relative}.content{padding:18px}.section{padding:18px}.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <h1>OKF 学习笔记</h1>
+      <p>官方规范 · Agent 生成 · 校验与可视化</p>
+    </div>
+    <nav class="toc">
+      <h2>目录</h2>
+      <a href="#position">1. 官方定位</a>
+      <a href="#goals">2. 目标与非目标</a>
+      <a href="#terms">3. 核心术语</a>
+      <a href="#bundle">4. Bundle 结构</a>
+      <a href="#concept">5. Concept Document</a>
+      <a href="#type">6. type 字段</a>
+      <a href="#examples">7. 官方示例</a>
+      <a href="#links">8. Links / Index / Log / Citations</a>
+      <a href="#conformance">9. Conformance</a>
+      <a href="#agent">10. Agent 生成流程</a>
+      <a href="#tools">11. 工程工具定位</a>
+      <a href="#layers">12. 三层边界</a>
+      <a href="#official-viz">13. 官方 visualizer 观察</a>
+      <a href="#summary">14. 最短记忆版</a>
+      <a href="#quiz">15. 复习自测</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="hero">
+      <h1>OKF（Open Knowledge Format）学习笔记</h1>
+      <p>日期：2026-06-16 · 主题：OKF 官方规范、Agent 生成知识包、校验与可视化工程实践</p>
+    </header>
+    <div class="content">
+
+      <section id="position" class="section">
+        <h2>1. OKF 的官方定位</h2>
+        <p>OKF 是一种开放的、对人类和 Agent 友好的知识表示格式，用于表示围绕数据和系统的元数据、上下文和经过整理的洞察。</p>
+        <div class="note">官方强调 OKF 的形态非常小：一个由 Markdown 文件组成的目录树，每个概念文档顶部带有 YAML 元数据块。</div>
+        <pre><code>a directory of markdown files with YAML frontmatter</code></pre>
+        <p>因此，OKF 不是数据库、不是查询引擎、不是知识图谱系统，也不是某个工具链本身。它首先是一种文件格式和组织约定。</p>
+      </section>
+
+      <section id="goals" class="section">
+        <h2>2. 官方目标与非目标</h2>
+        <div class="grid">
+          <div class="card"><strong>Readable</strong>人类不依赖专门工具也能阅读。</div>
+          <div class="card"><strong>Parseable</strong>Agent 不依赖专用 SDK 也能解析。</div>
+          <div class="card"><strong>Diffable</strong>可以在 Git 等版本控制系统中比较差异。</div>
+          <div class="card"><strong>Portable</strong>可以跨工具、组织和时间迁移。</div>
+        </div>
+        <h3>官方目标</h3>
+        <ol>
+          <li>定义一种 <code>enrichment agents</code> 可以写入的通用格式。</li>
+          <li>指导 <code>consumption agents</code> 如何读取和遍历知识。</li>
+          <li>促进知识在系统和组织之间交换。</li>
+          <li>标准化少量必须存在的字段，使内容可以被有意义地消费。</li>
+        </ol>
+        <h3>官方非目标</h3>
+        <ul>
+          <li>不定义固定的 concept type 分类体系。</li>
+          <li>不规定存储、服务或查询基础设施。</li>
+          <li>不替代 OpenAPI、Protobuf、Avro、数据库 schema 等领域专用格式。</li>
+        </ul>
+      </section>
+
+      <section id="terms" class="section">
+        <h2>3. 核心术语</h2>
+        <table>
+          <thead><tr><th>术语</th><th>中文理解</th><th>关键点</th></tr></thead>
+          <tbody>
+            <tr><td><code>Knowledge Bundle</code></td><td>知识包</td><td>自包含、层级化的知识文档集合，是分发单位。</td></tr>
+            <tr><td><code>Concept</code></td><td>概念</td><td>Bundle 内的单个知识单元，由一个 Markdown document 表示。</td></tr>
+            <tr><td><code>Concept ID</code></td><td>概念标识</td><td>由 concept 文件路径去掉 <code>.md</code> 后缀得到。</td></tr>
+            <tr><td><code>Frontmatter</code></td><td>顶部 YAML 元数据块</td><td>由 <code>---</code> 包围，位于 Markdown 文件顶部。</td></tr>
+            <tr><td><code>Body</code></td><td>正文</td><td>frontmatter 后面的 Markdown 内容。</td></tr>
+            <tr><td><code>Link</code></td><td>概念链接</td><td>标准 Markdown 链接，用于表达 concept 之间的关系。</td></tr>
+            <tr><td><code>Citation</code></td><td>来源引用</td><td>指向外部来源，用于支持正文中的声明。</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="bundle" class="section">
+        <h2>4. Bundle 结构</h2>
+        <pre><code>path/to/bundle/
+├── index.md
+├── log.md
+├── &lt;concept&gt;.md
+└── &lt;subdirectory&gt;/
+    ├── index.md
+    ├── &lt;concept&gt;.md
+    └── &lt;subdirectory&gt;/
+        └── …</code></pre>
+        <p>Bundle 可以被分发为 Git repository、tarball、zip archive，或 larger repository 中的 subdirectory。</p>
+        <h3>保留文件名</h3>
+        <table>
+          <thead><tr><th>文件名</th><th>作用</th></tr></thead>
+          <tbody>
+            <tr><td><code>index.md</code></td><td>Directory listing，用于目录索引和 progressive disclosure。</td></tr>
+            <tr><td><code>log.md</code></td><td>Update history，用于记录更新历史。</td></tr>
+          </tbody>
+        </table>
+        <div class="warn">官方规则：<code>index.md</code> 和 <code>log.md</code> 不能作为 concept document；其他 <code>.md</code> 文件都是 concept documents。</div>
+      </section>
+
+      <section id="concept" class="section">
+        <h2>5. Concept Document 结构</h2>
+        <p>每个 concept document 是 UTF-8 Markdown 文件，由 YAML frontmatter 和 Markdown body 两部分组成。</p>
+        <pre><code>---
+type: &lt;Type name&gt;                  # REQUIRED
+title: &lt;Optional display name&gt;
+description: &lt;Optional one-line summary&gt;
+resource: &lt;Optional canonical URI for the underlying asset&gt;
+tags: [&lt;tag&gt;, &lt;tag&gt;, …]            # Optional
+timestamp: &lt;ISO 8601 datetime&gt;     # Optional last-modified time
+# … other producer-defined key/value pairs
+---</code></pre>
+        <table>
+          <thead><tr><th>字段</th><th>官方性质</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td><code>type</code></td><td>必需</td><td>标识 concept 种类。</td></tr>
+            <tr><td><code>title</code></td><td>推荐</td><td>人类可读展示名。</td></tr>
+            <tr><td><code>description</code></td><td>推荐</td><td>一句话摘要，用于索引、搜索片段和预览。</td></tr>
+            <tr><td><code>resource</code></td><td>推荐</td><td>底层资产的 canonical URI。</td></tr>
+            <tr><td><code>tags</code></td><td>推荐</td><td>用于横向分类的短字符串列表。</td></tr>
+            <tr><td><code>timestamp</code></td><td>推荐</td><td>最后一次有意义修改的 ISO 8601 时间。</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="type" class="section">
+        <h2>6. <code>type</code> 字段</h2>
+        <p><code>type</code> 是 OKF 中最重要的字段之一。它是一个短字符串，用于识别 concept 的种类。Consumer 可以用它做路由、过滤和展示。</p>
+        <p><span class="pill">BigQuery Table</span><span class="pill">BigQuery Dataset</span><span class="pill">API Endpoint</span><span class="pill">Metric</span><span class="pill">Playbook</span><span class="pill">Reference</span></p>
+        <div class="note">这些是官方示例值，不是封闭枚举。<code>type</code> 字段必需，但 <code>type</code> 值没有官方中央注册表。</div>
+      </section>
+
+      <section id="examples" class="section">
+        <h2>7. 官方示例</h2>
+        <h3>绑定具体资源的 Concept</h3>
+        <pre><code>---
+type: BigQuery Table
+title: Customer Orders
+description: One row per completed customer order across all channels.
+resource: https://console.cloud.google.com/bigquery?p=acme&amp;d=sales&amp;t=orders
+tags: [sales, orders, revenue]
+timestamp: 2026-05-28T14:30:00Z
+---
+
+# Schema
+
+| Column        | Type      | Description                              |
+|---------------|-----------|------------------------------------------|
+| `order_id`    | STRING    | Globally unique order identifier.        |
+| `customer_id` | STRING    | Foreign key into [customers](/tables/customers.md). |
+| `total_usd`   | NUMERIC   | Order total in US dollars.               |
+| `placed_at`   | TIMESTAMP | When the customer submitted the order.   |
+
+# Joins
+
+Joined with [customers](/tables/customers.md) on `customer_id`.
+
+# Citations
+
+[1] [BigQuery table schema](https://console.cloud.google.com/bigquery?p=acme&amp;d=sales&amp;t=orders)</code></pre>
+        <h3>不绑定具体资源的 Concept</h3>
+        <pre><code>---
+type: Playbook
+title: Incident response — data freshness alert
+description: Steps to triage a freshness alert on the orders pipeline.
+tags: [oncall, incident]
+timestamp: 2026-04-12T09:00:00Z
+---
+
+# Trigger
+
+A freshness alert fires when `orders` lags more than 30 minutes behind
+its expected SLA. See the [orders table](/tables/orders.md).
+
+# Steps
+
+1. Check the [ingestion job dashboard](https://example.com/dash).
+2. …</code></pre>
+      </section>
+
+      <section id="links" class="section">
+        <h2>8. Links / Index / Log / Citations</h2>
+        <div class="split">
+          <div class="card">
+            <strong>Cross-linking</strong>
+            <p>Concepts 可以用标准 Markdown links 互相连接。推荐形式是以 <code>/</code> 开头的 bundle-relative absolute links。</p>
+            <pre><code>See the [customers table](/tables/customers.md)</code></pre>
+          </div>
+          <div class="card">
+            <strong>Link semantics</strong>
+            <p>Link 表示 relationship，但具体关系类型由周围文字说明。Graph view 通常视为 directed untyped edges。</p>
+          </div>
+          <div class="card">
+            <strong>Index Files</strong>
+            <p><code>index.md</code> 用来枚举目录内容，支持 progressive disclosure。Producer 可以自动生成，consumer 也可以动态合成。</p>
+          </div>
+          <div class="card">
+            <strong>Log Files</strong>
+            <p><code>log.md</code> 用于记录更新历史。日期 heading 必须使用 <code>YYYY-MM-DD</code>。</p>
+          </div>
+          <div class="card">
+            <strong>Citations</strong>
+            <p>当正文声明来自外部材料时，应在底部 <code># Citations</code> 中列出来源并编号。</p>
+          </div>
+          <div class="card">
+            <strong>Broken links</strong>
+            <p>Consumers 必须容忍 broken links。断链不使 bundle malformed。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="conformance" class="section">
+        <h2>9. OKF Conformance</h2>
+        <p>一个 bundle 符合 OKF v0.1，如果满足三条硬性要求：</p>
+        <ol>
+          <li>每个非保留 <code>.md</code> 文件都有可解析的 YAML frontmatter。</li>
+          <li>每个 frontmatter 都包含非空 <code>type</code> 字段。</li>
+          <li><code>index.md</code> 和 <code>log.md</code> 在出现时遵循官方对应结构。</li>
+        </ol>
+        <pre><code>OKF v0.1 hard conformance =
+  非保留 .md 有可解析 YAML frontmatter
+  frontmatter 有非空 type
+  reserved files 出现时结构正确</code></pre>
+        <div class="note">官方强调：Consumers 应将其他约束视为 soft guidance。缺少可选字段、未知 type、未知额外 key、broken links、缺少 index，都不应导致 consumer 拒绝 bundle。</div>
+      </section>
+
+      <section id="agent" class="section">
+        <h2>10. AI/Agent 如何生成 OKF</h2>
+        <p>OKF 设计上支持由人编写，也支持由 Agent 生成。</p>
+        <div class="flow">
+          <div>用户提供源资料和目标</div>
+          <div>Agent 读取 OKF SPEC</div>
+          <div>Agent 分析源资料结构</div>
+          <div>Agent 自动制定 producer plan</div>
+          <div>必要时确认关键边界</div>
+          <div>Agent 生成 Knowledge Bundle</div>
+          <div>运行校验和可视化等项目工具</div>
+        </div>
+        <p>重要认知：详细生成要求不应主要由用户手写，而应由 Agent 读取官方 SPEC 和源资料后自动分析制定。用户主要提供源资料、目标用途和关键边界。</p>
+      </section>
+
+      <section id="tools" class="section">
+        <h2>11. 工程实践素材：校验与可视化</h2>
+        <p>以下工具脚本属于工程实践辅助能力，需要明确它们不是 OKF 协议本体。</p>
+        <table>
+          <thead><tr><th>文件</th><th>定位</th><th>作用</th></tr></thead>
+          <tbody>
+            <tr><td><a href="assets/tools/okf_bundle_common.py"><code>tools/okf_bundle_common.py</code></a></td><td>项目级共享解析模块</td><td>解析 frontmatter、links、citations、log，统一 validator 和 visualizer 的解析逻辑。</td></tr>
+            <tr><td><a href="assets/tools/validate_okf_bundle.py"><code>tools/validate_okf_bundle.py</code></a></td><td>项目级 validator</td><td>按 <code>spec</code>、<code>reference</code>、<code>project</code> 三层检查 bundle。</td></tr>
+            <tr><td><a href="assets/tools/visualize_okf_bundle.py"><code>tools/visualize_okf_bundle.py</code></a></td><td>项目级 visualizer wrapper / extended viewer</td><td>辅助浏览 concepts、links、body、frontmatter、citations、log 等。</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="layers" class="section">
+        <h2>12. 官方协议、官方参考实现、项目增强工具</h2>
+        <pre><code>OKF SPEC
+  ↓
+Official reference implementation
+  ↓
+Project tooling</code></pre>
+        <div class="grid">
+          <div class="card"><strong>OKF SPEC</strong>官方格式规范，定义术语、结构、conformance、links、citations、index、log 等规则。</div>
+          <div class="card"><strong>官方参考实现</strong>例如 <code>OKFDocument.validate()</code>。它可能比 SPEC 更严格，但不等同于 SPEC hard conformance。</div>
+          <div class="card"><strong>项目增强工具</strong>validator、visualizer、common parser 等，帮助生产、校验和浏览，但不构成协议要求。</div>
+        </div>
+        <p>一句话总结：SPEC 决定什么叫 OKF；官方参考实现展示一种官方代码实践；项目工具帮助生产、校验和浏览，但不构成协议要求。</p>
+      </section>
+
+      <section id="official-viz" class="section">
+        <h2>13. 官方 visualizer 的实现观察</h2>
+        <p>运行官方 visualizer 后，曾出现 <code>37 concept(s), 0 edge(s)</code> 的输出。</p>
+        <ol>
+          <li>官方 visualizer 当前只跳过 <code>index.md</code>，没有跳过 <code>log.md</code>，所以会把 <code>log.md</code> 也计入 concept。</li>
+          <li>官方 visualizer 当前忽略以 <code>/</code> 开头的 bundle-relative absolute links，所以没有生成 edges。</li>
+        </ol>
+        <div class="note">这是官方 visualizer 当前实现限制，不是 OKF SPEC 的问题；官方 SPEC 明确推荐 bundle-relative absolute links。</div>
+      </section>
+
+      <section id="summary" class="section">
+        <h2>14. 最短记忆版</h2>
+        <ol>
+          <li>OKF 是开放的、对人类和 Agent 友好的知识表示格式。</li>
+          <li>OKF 的基本形态是 Markdown 文件目录树 + YAML frontmatter。</li>
+          <li><code>Knowledge Bundle</code> 是分发单位，<code>Concept</code> 是 bundle 内的单个知识单元。</li>
+          <li>OKF v0.1 的硬性合规要求很少：非保留 <code>.md</code> 有 frontmatter、<code>type</code> 非空、reserved files 结构正确。</li>
+          <li><code>title</code>、<code>description</code>、<code>resource</code>、<code>tags</code>、<code>timestamp</code> 是推荐字段，不是合规必需项。</li>
+          <li>Links 是标准 Markdown links，推荐 bundle-relative absolute links，通常表示有方向、无显式类型的关系。</li>
+          <li>Citations 用来支持正文中的外部来源声明。</li>
+          <li>OKF 不规定工具、存储、查询系统，也不定义固定 type taxonomy。</li>
+          <li>AI/Agent 可以生成 OKF bundle，但生成后应通过校验和人工 review。</li>
+          <li>Validator 和 visualizer 是工程辅助工具，不是 OKF 协议本体。</li>
+        </ol>
+      </section>
+
+      <section id="quiz" class="section">
+        <h2>15. 复习自测</h2>
+        <p class="kbd">点击按钮查看答案。建议先口头回答，再展开核对。</p>
+        <div class="quiz">
+          <div class="q"><strong>题目 1：OKF v0.1 的 hard conformance 包含哪些要求？</strong><br><br><button onclick="toggleAnswer(this)">查看答案</button><div class="answer">每个非保留 <code>.md</code> 文件都有可解析 YAML frontmatter；每个 frontmatter 都包含非空 <code>type</code>；<code>index.md</code> 和 <code>log.md</code> 出现时遵循官方结构。</div></div>
+          <div class="q"><strong>题目 2：<code>type</code> 是官方固定枚举吗？</strong><br><br><button onclick="toggleAnswer(this)">查看答案</button><div class="answer">不是。<code>type</code> 字段是必需的，但 type 值没有中央注册表。Producer 应选择描述性、自解释的 type，consumer 必须优雅处理未知 type。</div></div>
+          <div class="q"><strong>题目 3：为什么 OKF 推荐 bundle-relative absolute links？</strong><br><br><button onclick="toggleAnswer(this)">查看答案</button><div class="answer">因为它们以 <code>/</code> 开头，相对于 bundle root 解析。当文档在子目录中移动时，这种链接形式更稳定。</div></div>
+          <div class="q"><strong>题目 4：Validator 和 visualizer 是 OKF 协议要求吗？</strong><br><br><button onclick="toggleAnswer(this)">查看答案</button><div class="answer">不是。它们是工程辅助工具。OKF 官方不要求特定 tooling。Validator 用于辅助检查，visualizer 用于辅助浏览和 review。</div></div>
+          <div class="q"><strong>题目 5：Concept 与 Knowledge Bundle 的关系是什么？</strong><br><br><button onclick="toggleAnswer(this)">查看答案</button><div class="answer">Knowledge Bundle 是自包含、层级化的知识文档集合，是分发单位；Concept 是 bundle 内的单个知识单元，由一个 Markdown document 表示。</div></div>
+        </div>
+      </section>
+
+      <div class="footer">本笔记基于 OKF v0.1 官方规范和本次学习会话整理。</div>
+    </div>
+  </main>
+</div>
+<script>
+function toggleAnswer(btn){const a=btn.nextElementSibling;a.classList.toggle('show');btn.textContent=a.classList.contains('show')?'收起答案':'查看答案'}
+document.querySelectorAll('.toc a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth',block:'start'});}));
+</script>
+</body>
+</html>
