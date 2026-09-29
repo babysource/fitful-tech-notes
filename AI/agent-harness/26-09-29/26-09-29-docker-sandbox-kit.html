@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker Sandbox Kit 规范（v3）学习笔记 · 26-09-29</title>
+<style>
+:root{
+  --bg:#f6f8fa; --paper:#ffffff; --ink:#1f2328; --muted:#57606a;
+  --accent:#0d5ad6; --accent-soft:#e8f0fe; --line:#d8dee4;
+  --fact:#0a7d33; --fact-bg:#e6f4ea; --reason:#8250df; --reason-bg:#f3e8fc;
+  --ana:#9a6700; --ana-bg:#fff8c5; --todo:#cf222e; --todo-bg:#ffebe9;
+  --ok:#1a7f37; --bad:#cf222e;
+  --sidebar-w:264px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+  font-size:15px;line-height:1.75;overflow-x:hidden}
+.layout{display:flex;min-height:100vh}
+
+/* ============ 侧边栏 ============ */
+.sidebar{width:var(--sidebar-w);flex:0 0 var(--sidebar-w);background:#0e1726;color:#c9d4e3;
+  position:sticky;top:0;height:100vh;overflow-y:auto;padding:20px 14px 40px}
+.sidebar h2{font-size:13px;letter-spacing:.12em;color:#7d8da5;margin:8px 6px 14px;font-weight:600}
+.sidebar a{display:block;color:#c9d4e3;text-decoration:none;padding:6px 10px;border-radius:6px;
+  font-size:13.5px;margin:1px 0;transition:background .15s,color .15s}
+.sidebar a:hover{background:#1b2940;color:#fff}
+.sidebar a.active{background:var(--accent);color:#fff}
+.sidebar .foot{margin-top:22px;padding:10px 8px;border-top:1px solid #223047;
+  font-size:12px;color:#66788f;line-height:1.6}
+
+/* ============ 主内容 ============ */
+.main{flex:1;min-width:0;height:100vh;overflow-y:auto;scroll-behavior:smooth}
+.wrap{max-width:880px;margin:0 auto;padding:0 28px 80px}
+
+.banner{background:linear-gradient(135deg,#0d5ad6 0%,#0a3d91 60%,#0e1726 100%);
+  color:#fff;border-radius:0 0 18px 18px;padding:38px 34px 30px;margin-bottom:34px}
+.banner .kicker{font-size:12.5px;letter-spacing:.18em;opacity:.75;margin-bottom:8px}
+.banner h1{margin:0 0 10px;font-size:27px;line-height:1.35;font-weight:700}
+.banner .meta{font-size:13px;opacity:.85;line-height:1.8}
+.banner .meta a{color:#cfe0ff}
+.chips{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:12px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
+  padding:3px 11px;border-radius:999px}
+
+section{background:var(--paper);border:1px solid var(--line);border-radius:12px;
+  padding:26px 30px;margin:22px 0;scroll-margin-top:18px}
+section h2{margin:0 0 4px;font-size:20px;color:var(--ink);border-bottom:2px solid var(--accent-soft);
+  padding-bottom:10px}
+section h2 .no{color:var(--accent);font-family:Consolas,monospace;margin-right:8px}
+section h3{font-size:16px;margin:24px 0 8px;color:#0a3d91}
+section p{margin:10px 0}
+section ul,section ol{margin:8px 0;padding-left:24px}
+section li{margin:5px 0}
+.star{color:#d4a70c;font-style:normal}
+
+/* 标记 */
+.tag{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:4px;
+  vertical-align:1px;margin-right:4px;white-space:nowrap}
+.tag.fact{color:var(--fact);background:var(--fact-bg)}
+.tag.reason{color:var(--reason);background:var(--reason-bg)}
+.tag.ana{color:var(--ana);background:var(--ana-bg)}
+.tag.todo{color:var(--todo);background:var(--todo-bg)}
+
+/* 引用块 */
+blockquote{margin:14px 0;padding:12px 18px;background:var(--accent-soft);
+  border-left:4px solid var(--accent);border-radius:0 8px 8px 0}
+blockquote p{margin:4px 0}
+
+/* 代码 */
+code{font-family:Consolas,"JetBrains Mono",monospace;font-size:13px;background:#eef1f4;
+  padding:1.5px 6px;border-radius:4px;overflow-wrap:break-word}
+pre{background:#0e1726;color:#dce6f5;border-radius:10px;padding:16px 18px;overflow-x:auto;
+  font-size:13px;line-height:1.6}
+pre code{background:none;color:inherit;padding:0}
+pre .c{color:#7d8da5} /* 注释占位色 */
+
+/* 表格 */
+.table-wrap{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:13.8px;background:#fff}
+th{background:#eef2f7;text-align:left;padding:9px 14px;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+
+/* 流程图（ASCII） */
+.flow{background:#fbfcfe;border:1px dashed var(--line);border-radius:10px;padding:14px 18px;
+  overflow-x:auto;font-family:Consolas,monospace;font-size:12.8px;line-height:1.7;white-space:pre;color:#33415c}
+
+/* ============ 自测游戏 ============ */
+#quiz{border:2px solid var(--accent)}
+.qcard{border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin:14px 0;background:#fbfcfe}
+.qcard .qtitle{font-weight:600;margin-bottom:10px}
+.qcard .qtitle .qn{color:var(--accent);margin-right:6px;font-family:Consolas,monospace}
+.opt{display:flex;align-items:flex-start;gap:9px;padding:8px 12px;margin:6px 0;border:1px solid var(--line);
+  border-radius:8px;cursor:pointer;background:#fff;transition:border-color .12s,background .12s}
+.opt:hover{border-color:var(--accent)}
+.opt input{margin-top:5px;accent-color:var(--accent)}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+.opt.locked{cursor:default}
+.opt.correct{border-color:var(--ok);background:var(--fact-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--todo-bg)}
+.qbtn{margin-top:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;
+  padding:8px 22px;font-size:14px;cursor:pointer;font-family:inherit}
+.qbtn:hover{background:#0a4ab3}
+.qbtn:disabled{background:#aab4c0;cursor:not-allowed}
+.feedback{margin-top:12px;padding:12px 16px;border-radius:8px;font-size:14px;display:none}
+.feedback.show{display:block}
+.feedback.right{background:var(--fact-bg);border:1px solid var(--ok);color:#0a5c28}
+.feedback.wrong{background:var(--todo-bg);border:1px solid var(--bad);color:#8a1220}
+.feedback b{display:block;margin-bottom:4px}
+#scorebar{position:sticky;bottom:14px;background:#0e1726;color:#fff;border-radius:10px;
+  padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:14px;
+  box-shadow:0 6px 22px rgba(14,23,38,.35);flex-wrap:wrap}
+#scorebar .s{font-size:14px}
+#scorebar .s b{color:#7cc4ff;font-size:17px;font-family:Consolas,monospace}
+#resetQuiz{background:#223047;color:#fff;border:1px solid #3a4c68;border-radius:7px;
+  padding:7px 16px;cursor:pointer;font-size:13px;font-family:inherit}
+#resetQuiz:hover{background:#2c405e}
+.progress{height:6px;background:#223047;border-radius:999px;overflow:hidden;flex:1;min-width:120px}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,#7cc4ff,#0d5ad6);width:0;transition:width .3s}
+
+footer{color:var(--muted);font-size:12.5px;text-align:center;padding:10px 0 30px}
+
+/* 响应式 */
+@media (max-width:920px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%;flex:none;height:auto;position:static;max-height:44vh}
+  .main{height:auto;overflow:visible}
+  .wrap{padding:0 14px 60px}
+  section{padding:20px 16px}
+  .banner{padding:26px 20px 22px}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ================= 侧边栏 ================= -->
+<aside class="sidebar">
+  <h2>学习笔记 · 索引</h2>
+  <a href="#s1">1 · 痛点：Dockerfile 之后的一半</a>
+  <a href="#s2">2 · Kit 的物理制品模型 ★</a>
+  <a href="#s3">3 · 沙箱运行时与 Kit</a>
+  <a href="#s4">4 · 编写与构建</a>
+  <a href="#s5">5 · capabilities 统一申请</a>
+  <a href="#s6">6 · 组合与发布</a>
+  <a href="#s7">7 · 审查与强制：两道门 ★</a>
+  <a href="#s8">8 · 平台边界与约束归属 ★</a>
+  <a href="#s9">9 · 评估与采用</a>
+  <a href="#s10">10 · 易错点辨析</a>
+  <a href="#s11">11 · 命令速查</a>
+  <a href="#s12">12 · 类比总录</a>
+  <a href="#s13">待核验清单</a>
+  <a href="#s14">掌握状态</a>
+  <a href="#quiz" style="background:#1b3a6b;color:#9fc6ff">🎮 延迟反馈自测（10 题）</a>
+  <div class="foot">Docker Sandbox Kit Spec v3 · 研习沉淀<br>2026-09-29</div>
+</aside>
+
+<!-- ================= 主内容 ================= -->
+<main class="main">
+<div class="wrap">
+
+<header class="banner">
+  <div class="kicker">STUDY NOTES · 沉淀于 2026-09-29</div>
+  <h1>Docker Sandbox Kit 规范（v3）学习笔记</h1>
+  <div class="meta">
+    来源：<a href="https://github.com/docker/sandbox-kit-spec" target="_blank">docker/sandbox-kit-spec</a>（README · kit-intro · SPEC-v3 §7.4 · capabilities）·
+    <a href="https://docs.docker.com/ai/sandboxes/install/" target="_blank">Docker Sandboxes 安装文档</a> ·
+    <a href="https://www.docker.com/blog/docker-sandbox-kit-spec/" target="_blank">官方博客 "Authority as Code"</a>
+  </div>
+  <div class="chips">
+    <span class="chip">标签含义</span>
+    <span class="chip" style="background:#e6f4ea;border-color:#0a7d33;color:#0a7d33">事实＝原文可查证</span>
+    <span class="chip" style="background:#f3e8fc;border-color:#8250df;color:#8250df">推理＝由事实推导</span>
+    <span class="chip" style="background:#fff8c5;border-color:#9a6700;color:#9a6700">类比＝助记模型</span>
+    <span class="chip" style="background:#ffebe9;border-color:#cf222e;color:#cf222e">待核验</span>
+  </div>
+</header>
+
+<!-- S1 -->
+<section id="s1">
+  <h2><span class="no">1</span>痛点：Dockerfile 之后的另一半</h2>
+  <p><span class="tag fact">事实</span>Dockerfile 完整回答了镜像<b>内部</b>的一切：怎么构建、打包什么、怎么启动（entrypoint、cmd、env、user、workdir）。但它对镜像<b>外部</b>只字未提。</p>
+  <p><span class="tag fact">事实</span>Agent 不是静态应用负载，而是<b>行动者（actor）</b>：它主动决定下一步做什么，然后对文件系统、网络、数据库、云账号施加操作。这种授权不是缺陷，而是 agent 能干活的前提——不能装依赖、不能调 API、不能持凭据的 agent 无法完成工作。</p>
+  <p><span class="tag fact">事实</span>在 Kit 出现之前，"agent 需要哪些权限和资源"分布在：<code>docker run</code> 参数、Compose 文件、CI 配置、入职文档、以及配置者的记忆中——<b>在制品之外、不受版本管理、无法审查</b>。</p>
+  <p><span class="tag reason">推理</span>核心问题不是"agent 会越权"，而是<b>授权本身不可见、不可版本化</b>。能被审查的前提是信息存在制品内 → 存在制品内才能版本化 → 可版本化才能 diff → 可 diff 才能拦截审批。这条推导链是整个规范的价值基础。</p>
+  <blockquote><p><b>Dockerfiles made software reproducible. Kits make authority reproducible.</b><br>（Dockerfile 让软件可复现，Kit 让授权可复现。）</p></blockquote>
+  <p><span class="tag fact">事实</span>规范定位：开放规范（Apache 2.0）而非产品特性，官方宣传语 "Authority as Code"。当前为<b>实验性</b>状态，目标 <b>2026 Q4</b> 定稿。</p>
+</section>
+
+<!-- S2 -->
+<section id="s2">
+  <h2><span class="no">2</span>Kit 的物理制品模型 <span class="star">★核心承重墙</span></h2>
+  <blockquote>
+    <p><b>一个 Kit 在物理上就是一个普通 OCI 镜像：</b></p>
+    <ul>
+      <li><b>层（layers）</b>装<b>内容</b>（工具、文件系统）</li>
+      <li><b>manifest 注解</b> <code>vnd.docker.sandbox.kit.descriptor</code> 装<b>声明</b>（descriptor，即申请单）</li>
+      <li><b>一个 digest 把两者钉死在一起</b></li>
+    </ul>
+  </blockquote>
+  <p><span class="tag fact">事实</span>没有 Kit 专用 media type、没有 artifactType、没有旁车文件（sidecar）。因此：</p>
+  <ul>
+    <li><code>docker pull</code> 照常拉取，<code>regctl</code> 照常检查，任何注册表照常存储</li>
+    <li>可以被任何镜像 <code>FROM</code></li>
+    <li>不认识注解的引擎把它当普通镜像运行</li>
+    <li>扫描器、签名器、镜像同步工具零改动</li>
+  </ul>
+  <p><span class="tag reason">推理</span>"声明与内容同一制品、同一 digest"意味着 Kit 不可能被"半更新"：锁 digest 就同时锁定了内容、策略、元数据。分离的描述文件必然漂移（第二事实源问题）。</p>
+  <h3>两类 Kit</h3>
+  <div class="table-wrap"><table>
+    <tr><th>类型</th><th>层的内容</th><th>每次组合的数量</th></tr>
+    <tr><td><b>workload</b></td><td>根文件系统；镜像 config 提供入口点/环境</td><td>恰好一个</td></tr>
+    <tr><td><b>mixin</b></td><td>叠加在 workload 文件系统上的 overlay；可以无内容纯声明</td><td>零或多个</td></tr>
+  </table></div>
+  <p><span class="tag fact">事实</span>descriptor 刻意<b>不重复</b>镜像已能表达的信息：无顶层身份名、无镜像引用、无 entrypoint/env——那些是镜像 config 的职责。重复即产生"一个问题两个答案"，其中之一必然过期。</p>
+</section>
+
+<!-- S3 -->
+<section id="s3">
+  <h2><span class="no">3</span>两个角色：沙箱运行时与 Kit</h2>
+  <p><span class="tag fact">事实</span>沙箱（Docker Sandboxes / <code>sbx</code>）= <b>microVM</b>，自带独立内核和私有 Docker 引擎，提供"强制而非商量"的隔离边界。</p>
+  <p><span class="tag ana">类比</span>沙箱 = 毛坯房 + 门禁系统（运行时提供）；Kit = 家具 + 一份"我需要开哪些门"的申请表（内容 + 权限声明）。<br>
+  <span class="tag ana">边界</span>止于"隔离与内容的分工"，不涵盖权限的版本化审查机制。</p>
+  <p><span class="tag fact">事实</span>宿主机平台与沙箱内部环境是两个独立概念：</p>
+  <ul>
+    <li><b>宿主机</b>（装 sbx 的机器）：macOS Sonoma+（Apple silicon）、Windows 11、Ubuntu 24.04+；本地沙箱还需 Hypervisor Platform / KVM</li>
+    <li><b>沙箱内部</b>：Linux 用户态（见 §8）</li>
+  </ul>
+</section>
+
+<!-- S4 -->
+<section id="s4">
+  <h2><span class="no">4</span>编写与构建</h2>
+  <h3>四种编写形式 <span class="tag fact">事实</span></h3>
+  <div class="table-wrap"><table>
+    <tr><th>形式</th><th>构成</th><th>特点</th></tr>
+    <tr><td>伴生对（默认）</td><td><code>&lt;主干&gt;.yaml</code> + 同主干 <code>.dockerfile</code></td><td>Dockerfile 工具链照常工作</td></tr>
+    <tr><td>内联 <code>build:</code> 块</td><td>descriptor 内嵌 Dockerfile 文本</td><td>单文件</td></tr>
+    <tr><td>注释 descriptor</td><td>Dockerfile 的 <code># kit:</code> 注释块携带声明</td><td>一文件两用</td></tr>
+    <tr><td><b>Kit set</b></td><td><code>kits:</code> 列表引用其他 Kit</td><td><b>唯一配方不是 Dockerfile 的形式</b></td></tr>
+  </table></div>
+  <h3>构建命令 <span class="tag fact">事实</span></h3>
+  <pre><code># 构建 Kit（Win10 可行，只需 Docker Desktop + buildx）
+docker buildx build . -f gh.yaml -t docker.io/me/sbx-kit-gh:2.72.0
+docker buildx build . -f gh.yaml --build-arg version=2.99.0 -t gh-kit:2.99.0</code></pre>
+  <ul>
+    <li><code>.</code> = <b>构建上下文</b>：整个目录打包发给构建器（伴生文件、<code>contentFile</code> 引用的文件都必须在其中）</li>
+    <li><code>-f gh.yaml</code> = 入口文件（平时放 Dockerfile 的位置）</li>
+    <li>首行 <code># syntax=docker/sandbox-kit:3</code> 触发 BuildKit <b>自动拉取 Kit 前端</b>（<code>docker/sandbox-kit:3</code> 镜像）</li>
+    <li><code>docker build</code> 与 <code>docker buildx build</code> 在现代 Docker 中是同一条命令</li>
+  </ul>
+  <h3>前端流水线 <span class="tag fact">事实</span></h3>
+  <ol>
+    <li><b>严格校验</b> descriptor：任何无法识别的字段直接报错（<code>KnownFields(true)</code>）——拼错的键等于静默缺失的策略，必须失败</li>
+    <li>按文件名主干在上下文中找到伴生 Dockerfile（或在 descriptor 中用 <code>dockerfile:</code> 字段显式指定）</li>
+    <li>把 Dockerfile 原样交给常规 Dockerfile 构建器（<code>dockerfile.v0</code>）</li>
+    <li>将 guidance 内容（如 agent-context 的 <code>contentFile</code>）staged 进镜像</li>
+    <li>将 descriptor 作为 manifest 注解附加——产出<b>一个普通镜像</b></li>
+  </ol>
+  <p><span class="tag reason">推理</span>Kit 前端是"总装工头"：调用老工人（Dockerfile 构建器）干活，最后往包装箱上多贴一张单子（注解）。</p>
+  <h3>镜像构建基础（补课要点）</h3>
+  <p><span class="tag fact">事实</span>OCI 镜像 = ① 一叠只读层（每层是文件系统变化的 tar 包）+ ② config（JSON：入口点/环境/用户）+ ③ manifest（拼装说明，可挂注解）。</p>
+  <p><span class="tag fact">事实</span><code>docker build</code> 逐条执行 Dockerfile 指令；每条 <code>RUN</code> 在临时容器中<b>真实执行</b>，文件系统变化拍成一层；<code>ENTRYPOINT</code>/<code>ENV</code> 写入 config 而非层。多阶段构建中只有最后阶段的层进入最终镜像（<code>FROM scratch</code> + <code>COPY --from</code> 用于丢弃构建工具、只留成品）。</p>
+  <p><span class="tag ana">类比</span>Git：层 ≈ commit 的 diff，digest ≈ commit hash，manifest ≈ 仓库元信息。<span class="tag ana">边界</span>镜像层是只读叠加，没有分支/合并语义。</p>
+  <p><span class="tag fact">事实</span>mixin 用 <code>FROM scratch</code> 构建纯 overlay（如 gh 示例用 nix 闭包自带全部依赖），可落在任何 workload 上；mixin 也可设 ENTRYPOINT（它仍是可独立运行的镜像），但组合时被忽略——workload 锚定运行时契约。</p>
+</section>
+
+<!-- S5 -->
+<section id="s5">
+  <h2><span class="no">5</span>capabilities：统一申请模型</h2>
+  <p><span class="tag fact">事实</span>Kit 对宿主的一切请求都是 <code>capabilities</code> 列表中<b>带类型、带版本</b>的条目。资源授予（卷、端口、设备）与引擎执行的行为（生命周期钩子、agent 上下文）走同一清单——宿主机通过一种机制回答全部请求，或诚实地拒绝无法满足的部分。</p>
+  <pre><code>capabilities:
+  - type: com.docker.sandbox/network-policy@1     # 网络申请
+    config:
+      runtime:
+        allow: [github.com, api.github.com, uploads.github.com]
+  - type: com.docker.sandbox/credential@1         # 凭据申请
+    optional: true                                 # 给不了则跳过并记录
+    config:
+      service: github
+      apiKey: {name: GH_TOKEN, proxyManaged: true}
+  - type: com.docker.sandbox/agent-context@1      # 给 agent 的使用说明
+    config:
+      contentFile: ./gh-context.md</code></pre>
+  <p><span class="tag fact">事实</span><code>@1</code> 是该类型 <b>config schema 的版本号</b>：类型可独立演进（<code>@2</code> 与 <code>@1</code> 并存），不需要 descriptor 语法升级。知名类型每型一页规范（<code>docs/spec/capabilities/com.docker.sandbox/</code>），未知类型以不透明方式携带（宿主可支持私有类型）。</p>
+  <p><span class="tag fact">事实</span><code>required</code> 无法满足 → 解析失败（fail closed）；<code>optional</code> 无法满足 → 跳过并记录。</p>
+  <h3>平台底座（platform floor）<span class="tag fact">事实·规范原文</span></h3>
+  <blockquote><p>Kit 内容可以假定符合规范的运行时提供以下底座：<code>bash</code> 和 <code>sh</code>、<code>curl</code>、<code>git</code>、已填充的 CA store、以及名为 <code>agent</code>（uid <code>1000</code>，home <code>/home/agent</code>）的非 root 默认用户。其余一切 Kit 需要的东西，由它自己安装或携带。</p></blockquote>
+  <p><span class="tag fact">事实</span>Docker 维护了加固模板镜像 <code>dhi.io/sbx-templates:*</code> 预置底座。<b>关键坑</b>：拿裸发行版镜像构建——<b>构建成功、agent 启动失败</b>（"能构建 ≠ 能运行"）。自建路线必须自行补齐底座：</p>
+  <pre><code>FROM alpine:3.20
+RUN apk add --no-cache bash curl git ca-certificates \
+ &amp;&amp; adduser -D -u 1000 agent</code></pre>
+  <p><span class="tag reason">推理</span><code>sbx-templates</code> 是<b>便利品而非约束来源</b>：不用它获得的是<b>发行版选择自由</b>（debian/alpine/自制 rootfs），不是<b>操作系统自由</b>（见 §8）。</p>
+</section>
+
+<!-- S6 -->
+<section id="s6">
+  <h2><span class="no">6</span>组合与发布</h2>
+  <h3>组合语义 <span class="tag fact">事实</span></h3>
+  <p>启动一个集合：一个 workload + 任意多个 mixin。符合规范的运行时将集合视为<b>封闭的</b>：</p>
+  <ul>
+    <li>每个 <code>requires</code> 必须在集合内满足，否则解析失败；不隐式抓取任何东西</li>
+    <li><code>conflicts</code> 冲突直接失败</li>
+    <li>恰好一个 workload</li>
+    <li><b>按依赖图排序</b>而非参数输入顺序 → 同一集合永远组合出同一镜像（纯函数）→ 可锁定、可复现、可缓存</li>
+  </ul>
+  <div class="table-wrap"><table>
+    <tr><th>合并项</th><th>规则</th></tr>
+    <tr><td>文件层</td><td>各 mixin 依次叠加在 workload 上</td></tr>
+    <tr><td>网络规则</td><td>取<b>并集</b></td></tr>
+    <tr><td>生命周期钩子</td><td>按依赖顺序拼接</td></tr>
+    <tr><td>guidance</td><td>合成一份文档</td></tr>
+    <tr><td>不兼容请求</td><td>构建失败（不选赢家）</td></tr>
+  </table></div>
+  <h3>kind: set——整套发布 <span class="tag fact">事实</span></h3>
+  <pre><code># team-myagent.yaml
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+kind: set
+displayName: 我的 Agent 全套环境
+version: "1.0.0"
+kits:
+  - ref: docker.io/dockerdev/sbx-kit-shell:1.0.0          # workload
+  - ref: docker.io/dockerdev/sbx-kit-claude-mixin:2.1.6   # agent 本体
+  - ref: docker.io/me/sbx-kit-gh:2.72.0
+  - ref: docker.io/me/sbx-kit-node:22.0.0</code></pre>
+  <ul>
+    <li><code>kits:</code> 列表<b>就是</b> set 的配方——它没有也不需要 Dockerfile</li>
+    <li>成员必须是注册表引用（本地路径 / git URL 被拒绝）；发布时每项按 digest 钉死</li>
+    <li>构建时解析每个成员、校验集合一致性、<b>合并成一个普通 Kit</b> 发布</li>
+    <li>消费端一条引用跑全套：<code>sbx run docker.io/me/team-myagent:1.0.0 .</code></li>
+  </ul>
+  <p><span class="tag fact">事实</span>代价：合并产物是<b>钉死的制品</b>（pinned artifact）——升级任何一个成员都要重新发布整个 set。两种消费方式各有位置：固定 set（团队标准环境 / CI，稳定可复现）vs 运行时现场组合（本地开发，灵活）。</p>
+  <h3>文件账本 <span class="tag reason">推理·汇总</span></h3>
+  <div class="table-wrap"><table>
+    <tr><th>处境</th><th>需亲手写的文件</th></tr>
+    <tr><td>需要的 Kit 全有人发布</td><td><b>0 个</b>（直接 <code>sbx run</code> 引用）；固化分享才 +1 个 <code>set.yaml</code></td></tr>
+    <tr><td>现成 + 1 个自研工具</td><td>工具 1 对（yaml+dockerfile）+ 可选 set = 2~3 个</td></tr>
+    <tr><td>全套自建</td><td>workload 1 对 + 每工具 1 对 + set 1 个 = (N+1)×2+1</td></tr>
+    <tr><td>最小单文件 Kit</td><td>1 个（内联 <code>build:</code> 或 <code># kit:</code> 注释块）</td></tr>
+  </table></div>
+  <p><span class="tag reason">推理</span>每个"对"是一次性成本：写一次、发布、全团队复用。类比 <code>package.json</code>——依赖列表里一百个包不等于要写一百个包的代码。</p>
+  <h3>多架构 <span class="tag fact">事实</span></h3>
+  <p>Kit 是普通 OCI 镜像，multi-arch 原生支持（gh 示例的 nix 构建同时产出 <code>x86_64-linux</code> 与 <code>aarch64-linux</code>）。</p>
+</section>
+
+<!-- S7 -->
+<section id="s7">
+  <h2><span class="no">7</span>审查与强制：两道门 <span class="star">★易混点</span></h2>
+  <blockquote><p><b>"agent 新版多要一个域名"不是普通软件升级，而是授权变更——它必然显式可见，可被拦截审批。</b></p></blockquote>
+  <h3>为什么"只改一行版本号"就足以触发审查 <span class="tag reason">推理链</span></h3>
+  <div class="flow">版本号/tag/digest → 唯一确定不可变镜像 → manifest 注解里有完整声明 → 新旧权限面可机械对比</div>
+  <p>老世界里同样"只改版本号"却无法审查：权限活在制品外，版本号变化不携带权限信息，<b>没有可 diff 的对象</b>。能不能审查，取决于信息存在哪。</p>
+  <p><span class="tag ana">类比</span>手机 App 更新提示"此应用新增权限：通讯录"——因为权限清单写在 App 清单文件里、随版本走，系统对比新旧清单。Kit 把这套机制搬给 agent 沙箱。<span class="tag ana">边界</span>止于"声明随版本走 + 系统对比"；不对应 Kit 的运行时网络强制执行。</p>
+  <h3>门一：升级闸门（SPEC §7.4）<span class="tag fact">事实·规范原文</span></h3>
+  <p>descriptor 投影为<b>权限面</b>（permission surface）：宿主机必须授予的一切的归一化集合（分阶段的网络 allow/deny 列表、各阶段凭据、存储路径、skills 路径、端口、USB 匹配、privileged，以及其他类型的 <code>type+config-digest</code> 条目）。</p>
+  <p><b>会拦截更新的消费方把 Kit 的权限面存入 lock，并将候选版本的权限面与之对比：</b></p>
+  <ul>
+    <li>版本变动但权限面<b>未扩大</b> → <b>MAY</b> 静默应用</li>
+    <li>任何<b>扩大</b> → <b>MUST</b> 停下等待批准：
+      <ul>
+        <li>新增 allow 条目</li>
+        <li><b>删除 deny 条目</b>（deny 本身是授权可接受的一部分）</li>
+        <li>新凭据、新路径、新端口、新 USB 匹配、privileged</li>
+        <li>对已授予只读的 skills 路径申请写权限</li>
+        <li>其他类型请求的任何 config 变更</li>
+      </ul>
+    </li>
+    <li><code>optional</code> 不改变权限面（它只改变"给不了怎么办"，不改变"给得了给什么"）</li>
+    <li><code>resources</code>、<code>lifecycle</code>、<code>agent-context</code>、<code>agent-sessions</code>、<code>sbx</code>、<code>long-running</code> 不计入权限面（约束自身或沙箱内行为，不获取访问权）</li>
+    <li>args 展开后的值计入投影——<b>用参数扩大策略同样过闸门</b></li>
+  </ul>
+  <h3>门二：运行门禁 <span class="tag fact">事实</span></h3>
+  <p>沙箱内 agent 访问 allow 列表外的域名 → network-policy 由运行时<b>强制执行</b>，直接拦截。声明不是 agent 的自律，是门禁的名单。</p>
+  <h3>两道门对照（防混淆）★</h3>
+  <div class="table-wrap"><table>
+    <tr><th></th><th>升级闸门（§7.4）</th><th>运行门禁</th></tr>
+    <tr><td>时机</td><td>改版本号后启动时</td><td>agent 运行全程</td></tr>
+    <tr><td>谁比</td><td>运行时：新权限面 vs <b>lock 中的旧权限面</b></td><td>运行时：实际动作 vs <b>allowlist</b></td></tr>
+    <tr><td>结果</td><td>扩权 MUST 停批；未扩 MAY 静默</td><td>清单外直接拦截</td></tr>
+  </table></div>
+  <h3>其他可见位置 <span class="tag fact">事实</span></h3>
+  <ul>
+    <li><b>制品对比</b>：两版本都是普通镜像，<code>regctl</code> / <code>docker buildx imagetools inspect</code> 可拉出 manifest 注解做文本 diff</li>
+    <li><b>Code Review</b>：按 digest 锁版本时，PR 改一行 digest + 注解 diff 即权限变更审查</li>
+    <li><b>lock 文件 diff</b>：lock 记录权限面，其 diff 天然展示权限变化</li>
+  </ul>
+</section>
+
+<!-- S8 -->
+<section id="s8">
+  <h2><span class="no">8</span>平台边界与约束归属 <span class="star">★易混点</span></h2>
+  <h3>三层拆解："仅支持 Linux 生态吗" <span class="tag reason">推理·分层</span></h3>
+  <div class="table-wrap"><table>
+    <tr><th>层</th><th>结论</th><th>依据</th></tr>
+    <tr><td>① 制品格式</td><td>理论上 OS 中立</td><td>Kit 就是 OCI 镜像 + 注解，未发明新格式；OCI 存在 Windows 镜像先例</td></tr>
+    <tr><td>② 规范契约</td><td><b>钉在 Linux 用户态</b></td><td>平台底座（bash/curl/git/CA/agent 用户）全部是 Linux 惯用语；任何符合规范的运行时都必须提供这套底座</td></tr>
+    <tr><td>③ 实现生态</td><td>今天 100% Linux</td><td>sbx = Linux microVM；已发布 Kit、examples、<code>sbx-templates</code> 清一色 Linux 用户态</td></tr>
+  </table></div>
+  <h3>两道锁的归属 ★</h3>
+  <div class="table-wrap"><table>
+    <tr><th>约束</th><th>主人</th><th>层级</th></tr>
+    <tr><td>底座契约（bash/curl/git/CA/agent 用户）→ Linux 用户态</td><td><b>Kit 规范</b></td><td>制品契约层</td></tr>
+    <tr><td>用 Linux 内核的 microVM 实现</td><td><b>sbx 运行时</b></td><td>实现选择层</td></tr>
+  </table></div>
+  <p><span class="tag fact">事实</span>规范全文没有"microVM"要求。十大原则之一：</p>
+  <blockquote><p><b>The grammar declares; runtimes behave.</b> descriptor 说<i>要什么</i>，从不说宿主<i>怎么给</i>。实现不了的能力应诚实地拒绝，而不是近似。</p></blockquote>
+  <p><span class="tag reason">推理</span>一致性测试考核<b>行为</b>而非<b>机制</b>——第二个运行时可以完全换掉隔离技术（gVisor、Firecracker、其他），但只要符合规范，服务的仍是 Linux 用户态的 Kit（底座契约推导所致）。逃出 Linux 的唯一途径是规范本身演进，不是换运行时。</p>
+  <p><span class="tag ana">类比</span>浏览器：workload Kit ≈ 网页，规范底座 ≈ HTML 标准，sbx ≈ Chrome，microVM ≈ Blink 渲染引擎。写网页满足的是 HTML 标准而非 Chrome 私有行为；换浏览器照样跑，但网页内容仍是 HTML。<span class="tag ana">边界</span>W3C 与 Docker 单一主导方的治理结构不同；"标准中立"目前是架构意图而非多方验证的事实。</p>
+  <p><span class="tag fact">现实注脚</span>今天 sbx 几乎是唯一成熟的符合规范的运行时——"满足规范契约"与"能在 sbx 上跑"暂时重合。约束归属是规范级的，但验证手段目前只有 sbx。</p>
+  <h3>异构系统怎么办</h3>
+  <div class="table-wrap"><table>
+    <tr><th>需求</th><th>结论</th></tr>
+    <tr><td><b>Windows 用户态</b> workload</td><td>❌ 规范不支持；需走 Kit 之外的产品路线（Windows VM/容器）</td></tr>
+    <tr><td>agent <b>运行在 Android 里</b>（形态 A）</td><td>❌ Android 用户态（bionic/ART）不是标准 Linux 发行版，底座契约对不上</td></tr>
+    <tr><td>agent 在 Linux 沙箱里<b>操控</b> Android（形态 B）</td><td>✅ 可行：<code>com.docker.sandbox/usb-device@1</code> 接 USB 真机 + adb 工具链 mixin；或沙箱内跑 Android 模拟器容器 <span class="tag todo">待核验</span>社区方案（如 dockerify-android）的性能与嵌套虚拟化</td></tr>
+  </table></div>
+  <p><span class="tag reason">推理</span>"跑什么"≠"能操作什么"：边界画在沙箱墙内侧。Linux 沙箱可作为基地操控异构系统（adb / SSH / 云 API）。</p>
+</section>
+
+<!-- S9 -->
+<section id="s9">
+  <h2><span class="no">9</span>评估与采用（2026-09 时点）</h2>
+  <h3>成熟度 <span class="tag fact">事实</span></h3>
+  <ul>
+    <li>状态：实验性（Experimental），Apache 2.0，目标 <b>2026 Q4</b> 定稿</li>
+    <li>演进承诺：增量式——能力类型独立版本化（<code>@1</code>/<code>@2</code> 并存发布），descriptor 级 <code>schemaVersion</code> 升级是最后手段</li>
+    <li>版本断层：Docker Hub 上 <code>docker</code> org 发 v3，<code>sbx</code> org 是旧 v2 线，官方明言<b>不要混用</b></li>
+  </ul>
+  <h3>采用信号</h3>
+  <div class="table-wrap"><table>
+    <tr><th>值得上</th><th>缓一缓</th></tr>
+    <tr><td>agent 已跑在沙箱且在 Docker 生态（零迁移成本）</td><td>工作站不在 sbx 支持平台（如 Windows 10）</td></tr>
+    <tr><td>有审计/合规压力（权限变更可 diff 可审批）</td><td>需要规范级稳定（等 Q4 定稿）</td></tr>
+    <tr><td>多人/多机/多环境复用需求（set 一条引用）</td><td>团队连 Dockerfile 都未铺开（先解决内容复现）</td></tr>
+    <tr><td>担心供应商锁定（开放规范 + 一致性测试）</td><td></td></tr>
+  </table></div>
+  <h3>风险清单</h3>
+  <ol>
+    <li><b>语法会动</b>：承诺 additive，但 <code>@2</code> 出现后有兼容矩阵要管</li>
+    <li><b>单一参考实现</b>：规范开放，主力运行时只有 sbx；"不是锁定"待第二个实现验证</li>
+    <li><b>组合即信任传递</b>：组合权限面 = 各成员申请的<b>并集</b>；用别人的 Kit = 信任其申请清单；闸门把关，审批责任在使用方</li>
+    <li><b>v2/v3 并存期</b>：文档、包、教程两代混杂</li>
+  </ol>
+  <h3>行动路径（Windows 10 环境）</h3>
+  <ul>
+    <li><b>现在可做</b>：构建路径——<code>docker buildx build -f gh.yaml</code> + <code>docker buildx imagetools inspect</code> 看注解（只需 Docker Desktop，产物为普通镜像，不算押注）</li>
+    <li><b>持续观察</b>：Q4 2026 定稿动向；第二个运行时实现是否出现</li>
+    <li><b>上真沙箱</b>：等 Windows 11 环境，或云模式（<code>sbx --cloud</code>，同 Kit 引用，不挂载本地工作区）</li>
+  </ul>
+</section>
+
+<!-- S10 -->
+<section id="s10">
+  <h2><span class="no">10</span>易错点辨析（验收沉淀）</h2>
+  <ol>
+    <li><b>"物理是什么" vs "怎么写"</b>：Kit 物理上 = 普通 OCI 镜像（层装内容 + manifest 注解装声明 + 一个 digest）；"一工具一 Kit / 伴生文件"是编写粒度与形式。被问"是什么"不要答"怎么写"。</li>
+    <li><b>两道门不可混</b>：升级闸门比 <b>lock 里的权限面</b>（§7.4，扩权 MUST 停批）；运行门禁查 <b>allowlist</b>（清单外拦截）。前者管"版本变化带来的授权变化"，后者管"运行时的实际动作"。</li>
+    <li><b>组合权限 = 并集</b>：多工具组合后权限面是全体成员申请的并集，闸门照常把守——这是"组合即信任传递"的基础。</li>
+    <li><b>"越权" ≠ 问题本质</b>：问题不是 agent 会越权，而是授权不可见、不可版本化；agent 拿权限是特性，散落在外才是缺陷。</li>
+    <li><b>set 没有 Dockerfile</b>：<code>kits:</code> 列表就是配方——四种编写形式中唯一非 Dockerfile 的。</li>
+    <li><b><code>sbx-templates</code> 不是平台锁</b>：不用它可换发行版（自己补底座），换不了操作系统（底座契约 + 运行时内核两道锁）。</li>
+    <li><b>"仅 Linux"要说准</b>：沙箱内运行环境钉在 Linux 用户态（规范级）；宿主机平台无关（sbx 支持 macOS/Win11/Ubuntu）；格式理论 OS 中立。</li>
+  </ol>
+</section>
+
+<!-- S11 -->
+<section id="s11">
+  <h2><span class="no">11</span>命令速查</h2>
+  <pre><code># 构建 Kit（Win10 可行，只需 Docker Desktop + buildx）
+docker buildx build . -f gh.yaml -t docker.io/me/sbx-kit-gh:2.72.0
+docker buildx build . -f gh.yaml --build-arg version=2.99.0 -t gh-kit:2.99.0
+
+# 查看镜像 manifest（验证声明在注解里）
+docker buildx imagetools inspect docker.io/me/sbx-kit-gh:2.72.0
+
+# 安装 sbx（Win11/macOS Sonoma+/Ubuntu 24.04+）
+winget install -h Docker.sbx        # Windows
+brew install docker/tap/sbx         # macOS
+sbx login                            # Docker OAuth
+
+# 运行（本地/云同 Kit 引用；云不挂载宿主工作区）
+sbx run docker.io/dockerdev/sbx-kit-shell:1.0.0 docker.io/me/sbx-kit-gh:2.72.0 .
+sbx --cloud …</code></pre>
+  <p>浏览已发布 Kit：Docker Hub <code>type=sbx_kit</code> + Verified Publisher（<code>docker</code> org = v3，<code>sbx</code> org = v2，勿混用）。</p>
+</section>
+
+<!-- S12 -->
+<section id="s12">
+  <h2><span class="no">12</span>类比总录（含边界）</h2>
+  <div class="table-wrap"><table>
+    <tr><th>类比</th><th>对应</th><th>边界</th></tr>
+    <tr><td>手机 App 权限提示</td><td>声明随版本走 + 系统对比新旧清单（升级闸门）</td><td>不对应运行时网络强制；App 权限粒度与 capabilities 类型不同构</td></tr>
+    <tr><td>浏览器（网页/HTML/Chrome/Blink）</td><td>workload/规范/sbx/microVM 的归属分层</td><td>治理结构不同：HTML 有多方标准组织，Kit 规范目前 Docker 单一主导</td></tr>
+    <tr><td>Git（commit/diff/hash）</td><td>层/文件系统变化/digest</td><td>镜像层只读叠加，无分支合并语义</td></tr>
+    <tr><td>毛坯房 + 家具 + 申请表</td><td>沙箱隔离 / Kit 内容 / Kit 声明的分工</td><td>止于分工；不涵盖版本化审查</td></tr>
+    <tr><td>package.json</td><td>已发布 Kit 引用免费、文件账本趋近于零</td><td>npm 依赖无"权限面"概念</td></tr>
+    <tr><td>总装工头 / 装订机</td><td>Kit 前端：调用 Dockerfile 构建 + 贴注解</td><td>止于编排角色，不含校验细节</td></tr>
+  </table></div>
+</section>
+
+<!-- S13 -->
+<section id="s13">
+  <h2><span class="no">✓</span>待核验清单</h2>
+  <ul>
+    <li><span class="tag todo">待核验</span><code>dhi.io/sbx-templates:*</code> 的实际标签列表与基础发行版（规范未展开）</li>
+    <li><span class="tag todo">待核验</span>Android 模拟器容器方案（dockerify-android 等）在沙箱 microVM 内的性能与嵌套虚拟化可行性</li>
+    <li><span class="tag todo">待核验</span>2026 Q4 定稿的实际落地情况与语法变化</li>
+    <li><span class="tag todo">待核验</span>sbx 在 Windows 10 上 winget 安装的实际行为（官方仅支持 Win11）</li>
+    <li><span class="tag todo">待核验</span><code>sbx run</code> 的确切命令行语法细节（本次纸面实践采用 README/kit-intro 可证形式）</li>
+  </ul>
+</section>
+
+<!-- S14 -->
+<section id="s14">
+  <h2><span class="no">✎</span>掌握状态（阶段反馈）</h2>
+  <ul>
+    <li><b>已焊牢</b>：痛点推导链、组合模型（workload/mixin/set）、约束归属（规范 vs 运行时）、平台边界</li>
+    <li><b>验收暴露的薄弱点</b>（已转化为 §10 易错点 1/2/3）：物理制品模型的一句话表述、两道门的区分、组合权限并集</li>
+    <li><b>后续实践里程碑</b>：Win10 构建路径实操（build + inspect，治"物理模型"薄弱点最直接）→ Win11 后 sbx 实操（亲历升级闸门）</li>
+  </ul>
+</section>
+
+<!-- QUIZ -->
+<section id="quiz">
+  <h2><span class="no">🎮</span>延迟反馈自测 · 10 题</h2>
+  <p style="color:var(--muted)">规则：每题选择后点击「提交答案」才显示判定与解析（延迟反馈，防提示污染）。答完关注底部进度与得分。</p>
+  <div id="quizList"></div>
+  <div id="scorebar">
+    <span class="s">进度 <b id="doneNum">0</b>/<span id="totalNum">10</span> · 正确 <b id="okNum">0</b></span>
+    <div class="progress"><i id="progBar"></i></div>
+    <span class="s" id="verdict">开考！</span>
+    <button id="resetQuiz">重置重测</button>
+  </div>
+</section>
+
+<footer>Docker Sandbox Kit Specification v3 · 学习笔记 · 2026-09-29 · Markdown 源：26-09-29-docker-sandbox-kit.md</footer>
+</div>
+</main>
+</div>
+
+<script>
+/* ============ 数据 ============ */
+const QUIZ=[
+ {q:"Kit 在物理上是什么？",
+  opts:["一个专门的 Kit 制品格式，带独立 media type","一个普通 OCI 镜像：层装内容、manifest 注解装声明、一个 digest 钉死两者","一个 YAML 文件加一个 Dockerfile 文件","一个由 sbx 私有存储的配置包"],
+  a:1,ex:"承重墙句式：普通 OCI 镜像（层=内容，注解 vnd.docker.sandbox.kit.descriptor=声明，digest 同时锁定两者）。无新 media type、无旁车文件，生态零改动。'两个文件'是编写形式，不是物理形态。"},
+ {q:"新版 Kit 的网络 allow 列表多了一个域名，使用者只改了一行版本引用。运行时会怎样？",
+  opts:["静默放行，域名只是小改动","构建直接失败","权限面扩大 → MUST 停下等待批准（升级闸门比对 lock 中的旧权限面）","agent 运行时访问该域名才提示"],
+  a:2,ex:"§7.4：会拦截更新的消费方把权限面存入 lock 并与候选版本对比。新增 allow 条目属于 widening，MUST 停批；未扩大的版本变动才 MAY 静默应用。'改一行就够'是因为版本号→digest→manifest→注解，权限清单随制品可取回。"},
+ {q:"多个 mixin 组合后的最终权限面 = ？",
+  opts:["取权限最严格的那个成员","workload 的权限覆盖 mixin 的","各成员申请的并集","需要手工在 set 里重新声明"],
+  a:2,ex:"组合语义：网络规则取并集、钩子拼接、guidance 合一。权限面=全体成员申请的并集，闸门照常把守——这就是'组合即信任传递'：用别人的 Kit = 信任它的申请单。"},
+ {q:"'必须提供 bash、git、CA store、agent 用户（uid 1000）'这条约束归谁所有？",
+  opts:["sbx 运行时","Kit 规范（规范性底座契约）","dhi.io 模板镜像","Linux 发行版"],
+  a:1,ex:"平台底座是规范级条款（SPEC 原文），任何符合规范的运行时都必须提供。sbx 只是执行者之一；sbx-templates 只是预置底座的便利品。"},
+ {q:"'沙箱跑在带 Linux 内核的 microVM 上'这个事实归谁所有？",
+  opts:["Kit 规范的硬性要求","OCI 镜像规范的要求","sbx 运行时的实现选择","BuildKit 前端的机制"],
+  a:2,ex:"规范全文没有 microVM——'语法只声明，运行时负责行为'。一致性测试考核行为而非机制；第二个运行时可换任何隔离技术，但底座契约（Linux 惯用语）决定了它服务的仍是 Linux 用户态的 Kit。"},
+ {q:"kind: set 的内容配方是什么？",
+  opts:["伴生 set.dockerfile","内联 build: 块","kits: 引用列表本身就是配方，set 没有 Dockerfile","合并时自动生成的 Dockerfile"],
+  a:2,ex:"四种编写形式中唯一非 Dockerfile 的：kits: 列表就是配方。构建时按 ref+digest 拉取各成员，校验一致性，合并成一个普通 Kit 发布。注意代价：pinned artifact，升级任一成员需重新发布 set。"},
+ {q:"命令 docker buildx build . -f gh.yaml 中，gh.dockerfile 是如何被找到的？",
+  opts:["必须用 --dockerfile 参数显式传入","Kit 前端在构建上下文（.）里按文件名主干伴生约定找到","Docker 会自动扫描目录里所有 .dockerfile","需要写在环境变量里"],
+  a:1,ex:"'.' 是构建上下文（整个目录打包发给构建器）；-f gh.yaml 只是入口。Kit 前端解析 descriptor 后按同主干约定在上下文中发现伴生文件（或用 dockerfile: 字段显式指定）。"},
+ {q:"拿裸 debian 镜像直接 FROM 构建 workload Kit，会发生什么？",
+  opts:["构建阶段直接报错","构建成功，但 agent 启动失败（缺平台底座）","完全正常，底座会被自动注入","会被强制改为 sbx-templates 基础镜像"],
+  a:1,ex:"规范点名的坑：'能构建 ≠ 能运行'。裸发行版缺 bash/agent 用户/git/CA 等底座，构建不校验这些，但 agent 启动会失败。自建路线必须自行补齐底座四件套。"},
+ {q:"新版 Kit 从 allowlist 里删掉了一条 deny 条目，算扩权吗？",
+  opts:["不算，减少限制是放松无害","算——deny 本身是授权可接受的一部分，删除属于 widening，MUST 停批","只在 deny 超过 3 条时才算","由 optional 字段决定"],
+  a:1,ex:"§7.4 明文：removed deny entry 属于 widening。deny 列表当初可能是你批准它的理由之一，删掉它等于扩大了实际可达范围。同理：对已授予只读的 skills 路径申请写权限也算扩权。"},
+ {q:"沙箱里的 agent 运行时 curl 一个 allowlist 之外的域名，会怎样？",
+  opts:["弹窗询问用户是否允许","由 agent 自行决定","运行门禁直接拦截（network-policy 由运行时强制执行）","记入日志但放行"],
+  a:2,ex:"运行门禁：allowlist 是门禁的名单，不是 agent 的自律——'强制而非商量的边界'。它与升级闸门是两道独立的门：升级时比 lock 权限面，运行时查 allowlist。"}
+];
+
+/* ============ 渲染 ============ */
+const list=document.getElementById('quizList');
+const state=QUIZ.map(()=>({answered:false,ok:false}));
+QUIZ.forEach((item,i)=>{
+  const card=document.createElement('div');card.className='qcard';
+  let h='<div class="qtitle"><span class="qn">Q'+(i+1)+'</span>'+item.q+'</div>';
+  item.opts.forEach((o,j)=>{h+='<label class="opt" data-q="'+i+'" data-o="'+j+'"><input type="radio" name="q'+i+'" value="'+j+'"><span>'+o+'</span></label>';});
+  h+='<button class="qbtn" data-q="'+i+'">提交答案</button><div class="feedback" id="fb'+i+'"></div>';
+  card.innerHTML=h;list.appendChild(card);
+});
+
+function updateBar(){
+  const done=state.filter(s=>s.answered).length, ok=state.filter(s=>s.ok).length;
+  document.getElementById('doneNum').textContent=done;
+  document.getElementById('okNum').textContent=ok;
+  document.getElementById('progBar').style.width=(done/QUIZ.length*100)+'%';
+  const v=document.getElementById('verdict');
+  if(done===0){v.textContent='开考！';}
+  else if(done<QUIZ.length){v.textContent='已答 '+done+' 题';}
+  else{
+    const r=ok/QUIZ.length;
+    v.textContent = r===1?'满分！五层全焊牢 🔥':r>=0.7?'不错，错题看解析回对应章节':'建议回看 §10 易错点再测';
+  }
+}
+
+list.addEventListener('click',e=>{
+  const opt=e.target.closest('.opt');
+  if(opt){
+    const qi=+opt.dataset.q;
+    if(state[qi].answered)return;
+    opt.parentElement.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));
+    opt.classList.add('sel');opt.querySelector('input').checked=true;return;
+  }
+  const btn=e.target.closest('.qbtn');
+  if(!btn)return;
+  const qi=+btn.dataset.q;
+  if(state[qi].answered)return;
+  const sel=list.querySelector('.opt.sel[data-q="'+qi+'"]');
+  const fb=document.getElementById('fb'+qi);
+  if(!sel){fb.className='feedback show wrong';fb.innerHTML='<b>⚠ 请先选择一个答案</b>';return;}
+  const pick=+sel.dataset.o,item=QUIZ[qi];
+  state[qi].answered=true;state[qi].ok=(pick===item.a);
+  btn.disabled=true;
+  list.querySelectorAll('.opt[data-q="'+qi+'"]').forEach(o=>{
+    o.classList.add('locked');o.querySelector('input').disabled=true;
+    if(+o.dataset.o===item.a)o.classList.add('correct');
+  });
+  if(pick!==item.a)sel.classList.add('wrong');
+  fb.className='feedback show '+(pick===item.a?'right':'wrong');
+  fb.innerHTML='<b>'+(pick===item.a?'✓ 正确':'✗ 错了')+'</b>'+item.ex;
+  updateBar();
+});
+
+document.getElementById('resetQuiz').addEventListener('click',()=>{
+  state.forEach(s=>{s.answered=false;s.ok=false;});
+  list.querySelectorAll('.opt').forEach(o=>{o.className='opt';o.querySelector('input').checked=false;o.querySelector('input').disabled=false;});
+  list.querySelectorAll('.qbtn').forEach(b=>b.disabled=false);
+  list.querySelectorAll('.feedback').forEach(f=>{f.className='feedback';f.innerHTML='';});
+  updateBar();
+  document.querySelector('.main').scrollTo({top:document.getElementById('quiz').offsetTop-20,behavior:'smooth'});
+});
+document.getElementById('totalNum').textContent=QUIZ.length;
+updateBar();
+
+/* ============ 侧栏高亮 ============ */
+const links=[...document.querySelectorAll('.sidebar a')];
+const secs=links.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const mo=new IntersectionObserver(es=>{
+  es.forEach(en=>{
+    if(en.isIntersecting){
+      links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+en.target.id));
+    }
+  });
+},{root:document.querySelector('.main'),rootMargin:'-15% 0px -70% 0px'});
+secs.forEach(s=>mo.observe(s));
+</script>
+</body>
+</html>

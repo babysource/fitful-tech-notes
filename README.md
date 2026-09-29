@@ -16,7 +16,8 @@
 | 类目 | 笔记 | 日期 | MD | HTML |
 |---|---|---|---|---|
 | <span id="model-training">🧬 模型训练</span> | MiniMind / LLM 工程化训练 | 26-05-15 | [MD](./AI/model-training/26-05-15/26-05-15-minimind-llm-training-notes.md) | [HTML](https://babysource.github.io/fitful-tech-notes/AI/model-training/26-05-15/26-05-15-minimind-llm-training-notes.html) |
-| <span id="agent-harness">🐎 驾驭智能</span> | Dynamic Workflows 学习笔记 | 26-06-09 | [MD](./AI/agent-harness/26-06-09/26-06-09-claude-code-dynamic-workflows.md) | [HTML](https://babysource.github.io/fitful-tech-notes/AI/agent-harness/26-06-09/26-06-09-claude-code-dynamic-workflows.html) |
+| <span id="agent-harness">🐎 驾驭智能</span> | Docker Sandbox Kit 规范（v3）学习笔记 | 26-09-29 | [MD](./AI/agent-harness/26-09-29/26-09-29-docker-sandbox-kit.md) | [HTML](https://babysource.github.io/fitful-tech-notes/AI/agent-harness/26-09-29/26-09-29-docker-sandbox-kit.html) |
+|  | Dynamic Workflows 学习笔记 | 26-06-09 | [MD](./AI/agent-harness/26-06-09/26-06-09-claude-code-dynamic-workflows.md) | [HTML](https://babysource.github.io/fitful-tech-notes/AI/agent-harness/26-06-09/26-06-09-claude-code-dynamic-workflows.html) |
 |  | Browser Harness 共学笔记 | 26-05-19 | [MD](./AI/agent-harness/26-05-19/26-05-19-browser-harness.md) | [HTML](https://babysource.github.io/fitful-tech-notes/AI/agent-harness/26-05-19/26-05-19-browser-harness.html) |
 | <span id="agent-knowledge">🕵️ 知识检索</span> | OKF（Open Knowledge Format）学习笔记 | 26-06-16 | [MD](./AI/agent-knowledge/26-06-16/26-06-16-okf-open-knowledge-format.md) | [HTML](https://babysource.github.io/fitful-tech-notes/AI/agent-knowledge/26-06-16/26-06-16-okf-open-knowledge-format.html) |
 
